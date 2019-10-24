@@ -1,0 +1,49 @@
+﻿@inherits E1BaseComponent
+@inject E1Service  E1Service
+<!--
+-->
+<div id="login" class="card mt-5 bg-light">
+    <form @onsubmit="@OnSubmit">
+        <h4 class="card-header"><i class="fas fa-user"></i> Login</h4>
+        <div class="card-body">
+            <input id="user" type="text" class="form-control m-1" placeholder="User" required autofocus @bind="@User" />
+            <input id="password" type="password" class="form-control m-1" placeholder="Password" required @bind="@Password" />
+        </div>
+        <div class="card-footer">
+            <div class="row justify-content-center">
+                <div class="col"></div>
+                <div class="col-auto">
+                    <button class="btn btn-primary" type="submit" disabled="@Busy">
+                        <span class=@Spin></span> <i class="fas fa-sign-in-alt"></i>
+                    </button>
+                </div>
+                <div class="col"></div>
+            </div>
+            <div class="row">
+                <label class="col text-danger">@Error</label>
+            </div>
+        </div>
+    </form>
+</div>
+
+@code {
+    protected string Spin => $"{(@Busy ? "spinner-grow spinner-grow-sm" : "")}";
+    protected bool Busy { get; set; } = false;
+    protected string User { get; set; }
+    protected string Password { get; set; }
+    protected string Error { get; set; }
+    async protected void OnSubmit()
+    {
+        Busy = true;
+        try
+        {
+            var AuthResponse = await E1Service.Login(User, Password);
+            await Mediator.Send(new LoginAction { AuthResponse = AuthResponse });
+        }
+        catch (Exception e)
+        {
+            Error = e.Message;
+        }
+        Busy = false;
+    }
+}

@@ -1,0 +1,33 @@
+app {
+    height: 100vh;
+}
+
+.main {
+    padding-top: 56px;
+}
+
+.main-list {
+    height: calc(100vh - 120px);
+    overflow: auto;
+}
+
+#overlay {
+    position: fixed;
+    width: 100%;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0,0,0,0.5);
+    z-index: 1980;
+    cursor: pointer;
+}
+
+#login {
+    position: absolute;
+    margin: 0;
+    top: 30%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 1999;
+}

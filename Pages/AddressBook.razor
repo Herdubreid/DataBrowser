@@ -1,0 +1,87 @@
+﻿@page "/AddressBook/{an8}"
+@inherits E1BaseComponent
+
+<div class="container mt-5">
+    @if (State.AddressBook == null)
+    {
+        <p><em>Loading...</em></p>
+    }
+    else
+    {
+        <form @onsubmit="@Save">
+            <div class="form-group row">
+                <label for="at1" class="col-4 form-label">@AB.z_AT1_36.title</label>
+                <div class="col">
+                    <input id="at1" class="form-control" readonly @bind-value="@AB.z_AT1_36.value" />
+                </div>
+            </div>
+            <div class="form-group row">
+                <label for="an8" class="col-4 form-label">@AB.z_AN8_21.title</label>
+                <div class="col">
+                    <input id="an8" class="form-control" readonly @bind-value="@AB.z_AN8_21.value" />
+                </div>
+            </div>
+            <div class="form-group row">
+                <label for="alph" class="col-4 form-label">@AB.z_ALPH_28.title</label>
+                <div class="col">
+                    <input id="alph" class="form-control" disabled="@IsReadOnly" @bind="@AB.z_ALPH_28.value" />
+                </div>
+            </div>
+            <div class="form-group row">
+                <label for="add1" class="col-4 form-label">@AB.z_ADD1_40.title</label>
+                <div class="col">
+                    <input id="add1" class="form-control" disabled="@IsReadOnly" @bind="@AB.z_ADD1_40.value" />
+                </div>
+            </div>
+            <div class="form-group row">
+                <label for="add2" class="col-4 form-label">@AB.z_ADD2_42.title</label>
+                <div class="col">
+                    <input id="add2" class="form-control" disabled="@IsReadOnly" @bind="@AB.z_ADD2_42.value" />
+                </div>
+            </div>
+            <div class="row justify-content-center">
+                @if (State.EditMode)
+                {
+                    <div class="col-auto">
+                        <button type="submit" class="btn btn-primary">Save</button>
+                    </div>
+                    <div class="col-auto">
+                        <button type="button" class="btn btn-warning" @onclick="@Cancel">Cancel</button>
+                    </div>
+                }
+                else
+                {
+                    <div class="col-auto">
+                        <button type="button" class="btn btn-primary" @onclick="@Edit">Edit</button>
+                    </div>
+                }
+            </div>
+        </form>
+    }
+</div>
+<div class="row">
+    <label class="col text-danger">@State.ErrorMsg</label>
+</div>
+
+@code {
+    [Parameter]
+    public string AN8 { get; set; }
+    protected bool IsReadOnly => !State.EditMode;
+    protected E1.W01012A.Form AB => State.AddressBook;
+    protected void Edit()
+    {
+        Mediator.Send(new EditModeAction { EditMode = true });
+    }
+    protected void Save()
+    {
+        Mediator.Send(new AddressBookAction { AN8 = AB.z_AN8_21.value.ToString(), FormAction = FormAction.Save });
+    }
+    protected void Cancel()
+    {
+        Mediator.Send(new EditModeAction { EditMode = false });
+    }
+    protected override async Task OnInitializedAsync()
+    {
+        await Mediator.Send(new AddressBookAction { AN8 = AN8, FormAction = FormAction.Get });
+    }
+}

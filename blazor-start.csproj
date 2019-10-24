@@ -1,0 +1,17 @@
+﻿<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+    <TargetFramework>netcoreapp3.0</TargetFramework>
+    <UserSecretsId>d10f83a7-9d1f-405d-8a9e-f92323f92889</UserSecretsId>
+    <RootNamespace>MyApp</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Blazor-State" Version="1.1.5" />
+    <PackageReference Include="Celin.AIS" Version="3.0.0-rc" />
+    <PackageReference Include="Cloudcrate.AspNetCore.Blazor.Browser.Storage" Version="3.0.0" />
+    <PackageReference Include="Microsoft.ApplicationInsights.AspNetCore" Version="2.8.2" />
+    <PackageReference Include="Microsoft.Azure.SignalR" Version="1.1.1" />
+  </ItemGroup>
+
+</Project>
