@@ -23,17 +23,19 @@
         <button class="btn btn-warning" @onclick="@Logout"><i class="fas fa-sign-out-alt"></i></button>
     </div>
 </div>
+<!--    
 @if (!State.Authenticated)
 {
     <div id="overlay"></div>
     <Login></Login>
 }
-<svelte-clock></svelte-clock>
+-->
 
 @code {
     protected async Task Logout() => await Mediator.Send(new LogoutAction());
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
+        /*
         base.OnAfterRender(firstRender);
         if (firstRender && !State.Authenticated)
         {
@@ -42,13 +44,9 @@
             {
                 await Mediator.Send(new LoginAction { AuthResponse = resp });
             }
-        }
+        }*/
     }
     protected override void OnAfterRender(bool firstRender)
     {
-        if (firstRender)
-        {
-            Js.InitClock("svelte-clock");
-        }
     }
 }

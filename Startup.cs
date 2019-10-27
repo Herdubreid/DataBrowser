@@ -6,11 +6,11 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
-using MyApp.Features.AppState;
-using MyApp.Services;
+using DataBrowser.Features.AppState;
+using DataBrowser.Services;
 using System.Reflection;
 
-namespace MyApp
+namespace DataBrowser
 {
     public class Startup
     {

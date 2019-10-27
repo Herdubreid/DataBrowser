@@ -1,8 +1,8 @@
 ﻿using BlazorState;
-using MyApp.Features.AppState;
+using DataBrowser.Features.AppState;
 using System;
 
-namespace MyApp.Pages
+namespace DataBrowser.Pages
 {
     public class E1BaseComponent : BlazorStateComponent
     {

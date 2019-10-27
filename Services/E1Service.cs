@@ -5,7 +5,7 @@ using System;
 using System.Net.Http;
 using System.Threading.Tasks;
 
-namespace MyApp.Services
+namespace DataBrowser.Services
 {
     public class E1Service : Celin.AIS.Server
     {

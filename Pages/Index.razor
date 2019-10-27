@@ -20,17 +20,6 @@
             <label class="col text-danger">@State.ErrorMsg</label>
         </div>
     }
-    @if (State.AddressBookList != null)
-    {
-        @foreach (var ab in State.AddressBookList)
-        {
-            <div class="row">
-                <NavLink class="col-2" href=@($"AddressBook/{ab.F0101_AN8}") Match="NavLinkMatch.Prefix">@ab.F0101_AN8</NavLink>
-                <div class="col-1">@ab.F0101_AT1</div>
-                <div class="col-9">@ab.F0101_ALPH</div>
-            </div>
-        }
-    }
 </div>
 
 @code
@@ -38,6 +27,5 @@
     protected string NameSearch { get; set; }
     protected async Task OnSubmit()
     {
-        await Mediator.Send(new ListAddressBookAction { Search = NameSearch });
     }
 }
