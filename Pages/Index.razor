@@ -1,5 +1,6 @@
 ﻿@page "/"
 @inherits E1BaseComponent
+@inject JsService Js
 
 <div class="navbar navbar-light">
     <form @onsubmit="@OnSubmit" class="col">
@@ -20,12 +21,26 @@
             <label class="col text-danger">@State.ErrorMsg</label>
         </div>
     }
+    <div class="card">
+        <div class="card-body h-300px">
+            <svelte-editor></svelte-editor>
+        </div>
+    </div>
 </div>
 
 @code
 {
     protected string NameSearch { get; set; }
+    protected string Command { get; set; } = "f0101";
     protected async Task OnSubmit()
     {
+        NameSearch = await Js.GetEditorTextAsync();
+    }
+    protected override void OnAfterRender(bool firstRender)
+    {
+        if (firstRender)
+        {
+            Js.InitEditor("svelte-editor");
+        }
     }
 }
