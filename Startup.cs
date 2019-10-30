@@ -1,13 +1,12 @@
 using BlazorState;
-using Cloudcrate.AspNetCore.Blazor.Browser.Storage;
+using DataBrowser.Features.AppState;
+using DataBrowser.Services;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
-using DataBrowser.Features.AppState;
-using DataBrowser.Services;
 using System.Reflection;
 
 namespace DataBrowser
@@ -38,7 +37,6 @@ namespace DataBrowser
                     .AddConfiguration(Configuration.GetSection("Logging"))
                     .AddApplicationInsights();
             });
-            services.AddStorage();
             services.AddBlazorState(
                 (options) => options.Assemblies = new Assembly[]
                 {

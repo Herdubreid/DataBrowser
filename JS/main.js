@@ -48,12 +48,12 @@ window.jsonViewer = {
             t.push(text);
             return t;
         });
-        jsonViewers = new JsonViewer({
+        jsonViewers.push(new JsonViewer({
             target,
             props: {
                 index
             }
-        });
+        }));
         return index;
     },
     clear: (index) => {

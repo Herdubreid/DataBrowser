@@ -16,23 +16,26 @@ namespace DataBrowser.Features.AppState
         {
             AppState State => Store.GetState<AppState>();
             JsService Js { get; }
-            public override Task<Unit> Handle(GetJsonAction aAction, CancellationToken aCancellationToken)
+            public override async Task<Unit> Handle(GetJsonAction aAction, CancellationToken aCancellationToken)
             {
-                if (aAction.Command.Length > 0)
+                var cmd = await Js.GetEditorTextAsync(aAction.Source);
+                if (cmd.Length > 0)
                 {
                     try
                     {
-                        var result = Celin.AIS.Data.DataRequest.Parser.Parse(aAction.Command);
-                        Js.SetJsonText(0, JsonSerializer.Serialize(result.Value, new JsonSerializerOptions
+                        var result = Celin.AIS.Data.DataRequest.Parser.Parse(cmd);
+                        Js.SetJsonText(aAction.Destination, JsonSerializer.Serialize(result.Value, new JsonSerializerOptions
                         {
                             IgnoreNullValues = true,
                             WriteIndented = true
                         }));
                     }
                     catch (Exception e)
-                    { }
+                    {
+                        Js.SetJsonText(aAction.Destination, e.Message);
+                    }
                 }
-                return Unit.Task;
+                return Unit.Value;
             }
             public GetJsonHandler(IStore store, JsService jsService) : base(store)
             {

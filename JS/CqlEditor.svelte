@@ -3,7 +3,6 @@
     import './prism/prism-celinql';
     import { cqlTextsStore } from './stores';
 
-    export let height = 200;
     export let index = 0;
 
     let textareaEl;
@@ -15,16 +14,14 @@
     $: textHeight = $cqlTextsStore[index].length > 0 
         ? textareaEl.scrollHeight > textareaEl.clientHeight
             ? `${textareaEl.scrollHeight}px`
-            : codeEl.clientHeight === height || (codeEl.clientHeight + 24) < textareaEl.clientHeight
+            : (codeEl.clientHeight + 24) < textareaEl.clientHeight
                 ? `${codeEl.clientHeight}px`
                 : `${textareaEl.clientHeight}px`
         : '1px';
 </script>
 
 <style>
-    .container {
-        position: relative;
-        top: 0;
+    .col {
         overflow: auto;
 	}
     textarea,
@@ -62,7 +59,7 @@
     }
 </style>
 
-<div class="container" style="height: {`${height}px`}">
+<div class="col">
     <div>
         <textarea bind:value={$cqlTextsStore[index]} spellcheck="false" style="height: {textHeight}" bind:this={textareaEl} class="editor" />
         <pre>

@@ -4,7 +4,8 @@ namespace DataBrowser.Features.AppState
 {
     public class GetJsonAction : IAction
     {
-        public string Command { get; set; }
+        public int Source { get; set; }
+        public int Destination { get; set; }
     }
     public class LoginAction : IAction
     {

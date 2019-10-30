@@ -9,16 +9,7 @@
             <label class="col text-danger">@State.ErrorMsg</label>
         </div>
     }
-    <div class="card">
-        <div class="card-body">
-            <CqlEditor Id="editor"></CqlEditor>
-        </div>
-    </div>
-    <div class="card">
-        <div class="card-body">
-            <JsonViewer Id="JsonViewer"></JsonViewer>
-        </div>
-    </div>
+    <CqlEditor TagId="cql"></CqlEditor>
 </div>
 
 @code

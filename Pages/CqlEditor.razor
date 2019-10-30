@@ -1,25 +1,47 @@
 ﻿@inherits BlazorStateComponent
 @inject JsService Js
 
-<nav class="navbar navbar-light bg-light">
-    <button class="btn btn-primary" @onclick="@Layout"><i class="fas fa-code"></i></button>
-</nav>
-<div class="m-1" id="@Id"></div>
+<div class="card" style="height: 300px">
+    <div class="card-body">
+        <DxTabs @bind-ActiveTabIndex="@ActiveTabIndex">
+            <DxTab Text="Edit"></DxTab>
+            <DxTab Text="Json"></DxTab>
+        </DxTabs>
+        <div class="row mt-2 ml-2" style="@BodyHeight" hidden="@(ActiveTabIndex != 0)" id="@EditorTag"></div>
+        <div class="row mt-2 ml-2" style="@BodyHeight" hidden="@(ActiveTabIndex != 1)" id="@ViewerTag"></div>
+    </div>
+</div>
+
+
 
 @code {
     [Parameter]
-    public string Id { get; set; }
-    int Index { get; set; }
-    async Task Layout()
+    public string TagId { get; set; }
+    string BodyHeight => "height: calc(100% - 46px)";
+    string EditorTag => $"{TagId}-edit";
+    string ViewerTag => $"{TagId}-view";
+    int activeTabIndex = 0;
+    int ActiveTabIndex
     {
-        var cmd = await Js.GetEditorTextAsync(Index);
-        await Mediator.Send(new GetJsonAction { Command = cmd });
+        get => activeTabIndex;
+        set
+        {
+            activeTabIndex = value;
+            if (activeTabIndex == 1)
+            {
+                Mediator.Send(new GetJsonAction { Source = EditorIndex, Destination = ViewerIndex });
+            }
+            InvokeAsync(StateHasChanged);
+        }
     }
+    int EditorIndex { get; set; }
+    int ViewerIndex { get; set; }
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
         if (firstRender)
         {
-            Index = await Js.InitEditorAsync(Id, "");
+            EditorIndex = await Js.InitEditorAsync(EditorTag, "");
+            ViewerIndex = await Js.InitJsonViewerAsync(ViewerTag, "");
         }
     }
 }
