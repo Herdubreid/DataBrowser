@@ -1,0 +1,25 @@
+﻿@inherits BlazorStateComponent
+@inject JsService Js
+
+<nav class="navbar navbar-light bg-light">
+    <button class="btn btn-primary" @onclick="@Layout"><i class="fas fa-code"></i></button>
+</nav>
+<div class="m-1" id="@Id"></div>
+
+@code {
+    [Parameter]
+    public string Id { get; set; }
+    int Index { get; set; }
+    async Task Layout()
+    {
+        var cmd = await Js.GetEditorTextAsync(Index);
+        await Mediator.Send(new GetJsonAction { Command = cmd });
+    }
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            Index = await Js.InitEditorAsync(Id, "");
+        }
+    }
+}

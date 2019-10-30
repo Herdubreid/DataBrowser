@@ -2,19 +2,7 @@
 @inherits E1BaseComponent
 @inject JsService Js
 
-<div class="navbar navbar-light">
-    <form @onsubmit="@OnSubmit" class="col">
-        <div class="input-group">
-            <div class="input-group-prepend">
-                <button type="submit" class="btn btn-outline-primary">
-                    <i class="fa fa-search"></i>
-                </button>
-            </div>
-            <input type="search" class="form-control bg-light" placeholder="Name Search..." @bind="@NameSearch" />
-        </div>
-    </form>
-</div>
-<div class="main-list container">
+<div class="container">
     @if (State.ErrorMsg != string.Empty)
     {
         <div class="row">
@@ -22,25 +10,17 @@
         </div>
     }
     <div class="card">
-        <div class="card-body h-300px">
-            <svelte-editor></svelte-editor>
+        <div class="card-body">
+            <CqlEditor Id="editor"></CqlEditor>
+        </div>
+    </div>
+    <div class="card">
+        <div class="card-body">
+            <JsonViewer Id="JsonViewer"></JsonViewer>
         </div>
     </div>
 </div>
 
 @code
 {
-    protected string NameSearch { get; set; }
-    protected string Command { get; set; } = "f0101";
-    protected async Task OnSubmit()
-    {
-        NameSearch = await Js.GetEditorTextAsync();
-    }
-    protected override void OnAfterRender(bool firstRender)
-    {
-        if (firstRender)
-        {
-            Js.InitEditor("svelte-editor");
-        }
-    }
 }

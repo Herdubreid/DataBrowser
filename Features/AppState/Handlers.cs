@@ -1,15 +1,45 @@
 ﻿using BlazorState;
-using MediatR;
 using DataBrowser.Services;
+using MediatR;
+using Pidgin;
 using System;
+using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
+using Unit = MediatR.Unit;
 
 namespace DataBrowser.Features.AppState
 {
     public partial class AppState
     {
-        public class LoginHander : ActionHandler<LoginAction>
+        public class GetJsonHandler : ActionHandler<GetJsonAction>
+        {
+            AppState State => Store.GetState<AppState>();
+            JsService Js { get; }
+            public override Task<Unit> Handle(GetJsonAction aAction, CancellationToken aCancellationToken)
+            {
+                if (aAction.Command.Length > 0)
+                {
+                    try
+                    {
+                        var result = Celin.AIS.Data.DataRequest.Parser.Parse(aAction.Command);
+                        Js.SetJsonText(0, JsonSerializer.Serialize(result.Value, new JsonSerializerOptions
+                        {
+                            IgnoreNullValues = true,
+                            WriteIndented = true
+                        }));
+                    }
+                    catch (Exception e)
+                    { }
+                }
+                return Unit.Task;
+            }
+            public GetJsonHandler(IStore store, JsService jsService) : base(store)
+            {
+                Js = jsService;
+            }
+        }
+        public class LoginHandler : ActionHandler<LoginAction>
         {
             AppState State => Store.GetState<AppState>();
             public override Task<Unit> Handle(LoginAction aAction, CancellationToken aCancellationToken)
@@ -20,7 +50,7 @@ namespace DataBrowser.Features.AppState
                 handler?.Invoke(State, null);
                 return Unit.Task;
             }
-            public LoginHander(IStore store) : base(store) { }
+            public LoginHandler(IStore store) : base(store) { }
         }
         public class LogoutHandler : ActionHandler<LogoutAction>
         {

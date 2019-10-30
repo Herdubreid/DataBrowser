@@ -1,0 +1,18 @@
+﻿@inherits BlazorStateComponent
+@inject JsService Js
+
+<div class="m-1" id="@Id"></div>
+
+@code {
+    [Parameter]
+    public string Id { get; set; }
+    int Index { get; set; }
+    AppState State => GetState<AppState>();
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            Index = await Js.InitJsonViewerAsync(Id, "{ item: 0 }");
+        }
+    }
+}

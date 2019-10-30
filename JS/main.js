@@ -1,34 +1,72 @@
 ﻿import './style.scss';
 import { get } from 'svelte/store';
-import { editorTextStore } from './stores';
-import Clock from './Clock.svelte';
-import Editor from './Editor.svelte';
+import { cqlTextsStore, jsonTextsStore } from './stores';
+import CqlEditor from './CqlEditor.svelte';
+import JsonViewer from './JsonViewer.svelte';
 
-window.clock = {
-    init: (tag) => {
-        const target = document.getElementsByTagName(tag)[0];
-        clock = new Clock({
+let cqlEditors = [];
+window.cqlEditor = {
+    init: (id, text) => {
+        const target = document.getElementById(id);
+        let index = cqlEditors.length;
+        cqlTextsStore.update(t => {
+            t.push(text);
+            return t;
+        });
+        cqlEditors.push(new CqlEditor({
             target,
-            props: {}
+            props: {
+                index
+            }
+        }));
+        return index;
+    },
+    clear: (index) => {
+        cqlTextsStore.update(t => {
+            t[index] = "";
+            return t;
+        });
+        editor.$destroy();
+    },
+    getText: (index) => {
+        return get(cqlTextsStore)[index];
+    },
+    setText: (index, text) => {
+        cqlTextsStore.update(t => {
+            t[index] = text;
+            return t;
         });
     }
 }
-let CurrentEditor;
-window.editor = {
-    init: (tag) => {
-        const target = document.getElementsByTagName(tag)[0];
-        CurrentEditor = new Editor({
-            target,
-            props: {}
+
+let jsonViewers = [];
+window.jsonViewer = {
+    init: (id, text) => {
+        const target = document.getElementById(id);
+        let index = jsonViewers.length;
+        jsonTextsStore.update(t => {
+            t.push(text);
+            return t;
         });
+        jsonViewers = new JsonViewer({
+            target,
+            props: {
+                index
+            }
+        });
+        return index;
     },
-    clear: () => {
-        CurrentEditor.$destroy();
+    clear: (index) => {
+        jsonTextsStore.update(t => {
+            t[index] = "";
+            return t;
+        });
+        jsonViewers[index].$destroy();
     },
-    getText: () => {
-        return get(editorTextStore);
-    },
-    setText: (text) => {
-        editorTextStore.set(text);
+    setText: (index, text) => {
+        jsonTextsStore.update(t => {
+            t[index] = text;
+            return t;
+        });
     }
 }

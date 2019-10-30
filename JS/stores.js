@@ -1,12 +1,21 @@
 //
 import { writable } from 'svelte/store';
 
-const editorText = () => {
-    const { subscribe, set } = writable('');
+const cqlTexts = () => {
+    const { subscribe, update } = writable([]);
     return {
         subscribe,
-        set
+        update
     }
 }
 
-export const editorTextStore = editorText();
+const jsonTexts = () => {
+    const { subscribe, update } = writable([]);
+    return {
+        subscribe,
+        update
+    }
+}
+
+export const cqlTextsStore = cqlTexts();
+export const jsonTextsStore = jsonTexts();

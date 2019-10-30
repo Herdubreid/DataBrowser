@@ -1,6 +1,4 @@
 ﻿@inherits E1BaseComponent
-@using Cloudcrate.AspNetCore.Blazor.Browser.Storage;
-@inject SessionStorage SessionStorage
 @inject JsService  Js
 
 <div class="navbar fixed-top navbar-light bg-light">
@@ -39,11 +37,7 @@
         base.OnAfterRender(firstRender);
         if (firstRender && !State.Authenticated)
         {
-            var resp = await SessionStorage.GetItemAsync<Celin.AIS.AuthResponse>(E1Service.SESSIONKEY);
-            if (resp != null)
-            {
-                await Mediator.Send(new LoginAction { AuthResponse = resp });
-            }
+            await Mediator.Send(new LoginAction { AuthResponse = resp });
         }*/
     }
     protected override void OnAfterRender(bool firstRender)
