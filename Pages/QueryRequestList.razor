@@ -1,0 +1,20 @@
+﻿@inherits E1BaseComponent
+
+<div class="list-group mt-2">
+    <button type="button" class="list-group-item list-group-item-action" @onclick="@AddQueryRequest"><i class="far fa-file"></i> Add</button>
+@foreach (var qr in State.QueryRequests)
+{
+    <button type="button" class="list-group-item list-group-item-action" @onclick="@(() => ToogleVisibility(qr.Id))" >@qr.Name</button>
+}
+</div>
+
+@code {
+    void AddQueryRequest()
+    {
+        Mediator.Send(new AddNewQueryRequestAction());
+    }
+    void ToogleVisibility(Guid id)
+    {
+        Mediator.Send(new ToggleQueryRequestVisibilityAction { Id = id });
+    }
+}

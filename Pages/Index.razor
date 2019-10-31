@@ -2,7 +2,7 @@
 @inherits E1BaseComponent
 @inject JsService Js
 
-<div class="container">
+<div class="row">
     @foreach (var qr in QueryRequests)
     {
         <CqlEditor QueryRequest="@qr"></CqlEditor>

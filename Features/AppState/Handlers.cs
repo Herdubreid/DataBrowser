@@ -13,6 +13,53 @@ namespace DataBrowser.Features.AppState
 {
     public partial class AppState
     {
+        public class NotifyChangeHandler : ActionHandler<NotifyChangeAction>
+        {
+            AppState State => Store.GetState<AppState>();
+            public override Task<Unit> Handle(NotifyChangeAction aAction, CancellationToken aCancellationToken)
+            {
+                EventHandler handler = State.Changed;
+                handler?.Invoke(State, null);
+
+                return Unit.Task;
+            }
+            public NotifyChangeHandler(IStore store) : base(store) { }
+        }
+        public class AddNewQueryRequestHandler : ActionHandler<AddNewQueryRequestAction>
+        {
+            AppState State => Store.GetState<AppState>();
+            public override Task<Unit> Handle(AddNewQueryRequestAction aAction, CancellationToken aCancellationToken)
+            {
+                var qr = new QueryRequest
+                {
+                    Id = Guid.NewGuid(),
+                    Visible = true,
+                    Name = $"New-{State.QueryRequests.Count}"
+                };
+                State.QueryRequests.Insert(0, qr);
+
+                EventHandler handler = State.Changed;
+                handler?.Invoke(State, null);
+
+                return Unit.Task;
+            }
+            public AddNewQueryRequestHandler(IStore store) : base(store) { }
+        }
+        public class ToggleQueryRequestVisibilityHandler : ActionHandler<ToggleQueryRequestVisibilityAction>
+        {
+            AppState State => Store.GetState<AppState>();
+            public override Task<Unit> Handle(ToggleQueryRequestVisibilityAction aAction, CancellationToken aCancellationToken)
+            {
+                var qr = State.QueryRequests.Find(qr => qr.Id.CompareTo(aAction.Id) == 0);
+                qr.Visible = !qr.Visible;
+
+                EventHandler handler = State.Changed;
+                handler?.Invoke(State, null);
+
+                return Unit.Task;
+            }
+            public ToggleQueryRequestVisibilityHandler(IStore store) : base(store) { }
+        }
         public class GetJsonHandler : ActionHandler<GetJsonAction>
         {
             AppState State => Store.GetState<AppState>();
@@ -24,8 +71,8 @@ namespace DataBrowser.Features.AppState
                 {
                     try
                     {
-                        query = Regex.Replace(query, @"\t|\n|\r", string.Empty).Trim(' ') + '\n';
-                        var result = Celin.AIS.Data.DataRequest.Parser.AtLeastOnceUntil(Parser.EndOfLine).ParseOrThrow(query);
+                        query += ';';
+                        var result = Celin.AIS.Data.DataRequest.Parser.Before(Parser.Char(';')).ParseOrThrow(query);
                         Js.SetJsonText(aAction.Destination, JsonSerializer.Serialize(result, new JsonSerializerOptions
                         {
                             IgnoreNullValues = true,

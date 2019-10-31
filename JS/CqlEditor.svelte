@@ -11,7 +11,7 @@
     $: code = Prism.highlight($cqlTextsStore[index], Prism.languages.celinql, "CelinQL")
         || "<em style='color: lightgray;'>Enter Command</em>";
     
-    $: textHeight = $cqlTextsStore[index].length > 0 
+    $: textHeight = $cqlTextsStore[index].length > 0
         ? textareaEl.scrollHeight > textareaEl.clientHeight
             ? `${textareaEl.scrollHeight}px`
             : (codeEl.clientHeight + 24) < textareaEl.clientHeight

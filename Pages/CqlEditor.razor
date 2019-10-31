@@ -1,9 +1,15 @@
 ﻿@inherits E1BaseComponent
 @inject JsService Js
 
-<div class="card" style="height: 350px">
-    <div class="card-body">
-        <h5 class="card-title">@QueryRequest.Name</h5>
+<div class="cards shadow m-2">
+    <div class="card-body" style="height: 400px; width: 450px">
+        <div class="row card-title">
+            <h5 class="col"><input class="form-control border-0" readonly="@(!CanEditTitle)" @onblur="@UpdateTitle" @onfocus="@EditTitle" @bind-value="@QueryRequest.Name" /></h5>
+            <div class="col-auto">
+                <button class="btn btn-sm btn-outline-danger"><i class="fas fa-trash"></i></button>
+                <button class="btn btn-sm btn-outline-warning" @onclick="@ToggleVisibility"><i class="fas fa-times"></i></button>
+            </div>
+        </div>
         <DxTabs @bind-ActiveTabIndex="@ActiveTabIndex">
             <DxTab Text="Edit"></DxTab>
             <DxTab Text="Json"></DxTab>
@@ -17,9 +23,11 @@
 @code {
     [Parameter]
     public QueryRequest QueryRequest { get; set; }
-    string BodyHeight => "height: calc(100% - 120px)";
+    string BodyHeight => "height: calc(100% - 140px)";
     string EditorTag => $"{QueryRequest.Id.ToString()}-edit";
     string ViewerTag => $"{QueryRequest.Id.ToString()}-view";
+    string Title { get; set; }
+    bool CanEditTitle { get; set; }
     int activeTabIndex = 0;
     int ActiveTabIndex
     {
@@ -36,6 +44,27 @@
     }
     int EditorIndex { get; set; }
     int ViewerIndex { get; set; }
+    void EditTitle()
+    {
+        Title = QueryRequest.Name;
+        CanEditTitle = true;
+    }
+    void UpdateTitle()
+    {
+        if (QueryRequest.Name.Length == 0)
+        {
+            QueryRequest.Name = Title;
+        }
+        else
+        {
+            Mediator.Send(new NotifyChangeAction());
+        }
+        CanEditTitle = false;
+    }
+    void ToggleVisibility()
+    {
+        Mediator.Send(new ToggleQueryRequestVisibilityAction { Id = QueryRequest.Id });
+    }
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
         if (firstRender)

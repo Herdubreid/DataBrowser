@@ -8,7 +8,7 @@ namespace DataBrowser.Features.AppState
     public class QueryRequest
     {
         public bool Visible { get; set; }
-        public Guid Id { get; } = new Guid();
+        public Guid Id { get; set; }
         public string Name { get; set; }
         public string Query { get; set; } = string.Empty;
     }
