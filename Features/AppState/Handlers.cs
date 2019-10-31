@@ -4,6 +4,7 @@ using MediatR;
 using Pidgin;
 using System;
 using System.Text.Json;
+using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 using Unit = MediatR.Unit;
@@ -18,19 +19,20 @@ namespace DataBrowser.Features.AppState
             JsService Js { get; }
             public override async Task<Unit> Handle(GetJsonAction aAction, CancellationToken aCancellationToken)
             {
-                var cmd = await Js.GetEditorTextAsync(aAction.Source);
-                if (cmd.Length > 0)
+                var query = await Js.GetEditorTextAsync(aAction.Source);
+                if (query.Length > 0)
                 {
                     try
                     {
-                        var result = Celin.AIS.Data.DataRequest.Parser.Parse(cmd);
-                        Js.SetJsonText(aAction.Destination, JsonSerializer.Serialize(result.Value, new JsonSerializerOptions
+                        query = Regex.Replace(query, @"\t|\n|\r", string.Empty).Trim(' ') + '\n';
+                        var result = Celin.AIS.Data.DataRequest.Parser.AtLeastOnceUntil(Parser.EndOfLine).ParseOrThrow(query);
+                        Js.SetJsonText(aAction.Destination, JsonSerializer.Serialize(result, new JsonSerializerOptions
                         {
                             IgnoreNullValues = true,
                             WriteIndented = true
                         }));
                     }
-                    catch (Exception e)
+                    catch (ParseException e)
                     {
                         Js.SetJsonText(aAction.Destination, e.Message);
                     }
@@ -48,7 +50,6 @@ namespace DataBrowser.Features.AppState
             public override Task<Unit> Handle(LoginAction aAction, CancellationToken aCancellationToken)
             {
                 State.AuthResponse = aAction.AuthResponse;
-                State.LoginTime = DateTime.Now;
                 EventHandler handler = State.Changed;
                 handler?.Invoke(State, null);
                 return Unit.Task;

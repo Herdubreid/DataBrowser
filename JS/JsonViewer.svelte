@@ -27,9 +27,7 @@
 </style>
 
 <div class="col">
-    <div>
     <pre>
         <code>{@html code}</code>
     </pre>
-    </div>
 </div>

@@ -3,15 +3,13 @@
 @inject JsService Js
 
 <div class="container">
-    @if (State.ErrorMsg != string.Empty)
+    @foreach (var qr in QueryRequests)
     {
-        <div class="row">
-            <label class="col text-danger">@State.ErrorMsg</label>
-        </div>
+        <CqlEditor QueryRequest="@qr"></CqlEditor>
     }
-    <CqlEditor TagId="cql"></CqlEditor>
 </div>
 
 @code
 {
+    IEnumerable<QueryRequest> QueryRequests => State.QueryRequests.Where(qr => qr.Visible);
 }
