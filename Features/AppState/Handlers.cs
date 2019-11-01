@@ -25,6 +25,38 @@ namespace DataBrowser.Features.AppState
             }
             public NotifyChangeHandler(IStore store) : base(store) { }
         }
+        public class SaveQueryRequestHandler : ActionHandler<SaveQueryRequestAction>
+        {
+            AppState State => Store.GetState<AppState>();
+            CloudStorageService CloudStorage { get; }
+            public override Task<Unit> Handle(SaveQueryRequestAction aAction, CancellationToken aCancellationToken)
+            {
+                var qr = State.QueryRequests.Find(qr => qr.Id.CompareTo(aAction.Id) == 0);
+                var root = CloudStorage.CloudFileShare.GetRootDirectoryReference();
+                var dest = root.GetFileReference(qr.Id.ToString());
+                dest.UploadText(JsonSerializer.Serialize(qr, new JsonSerializerOptions { WriteIndented = true }));
+
+                return Unit.Task;
+            }
+            public SaveQueryRequestHandler(IStore store, CloudStorageService cloudStorage) : base(store)
+            {
+                CloudStorage = cloudStorage;
+            }
+        }
+        public class DeleteQueryRequestHandler : ActionHandler<DeleteQueryRequestAction>
+        {
+            AppState State => Store.GetState<AppState>();
+            public override Task<Unit> Handle(DeleteQueryRequestAction aAction, CancellationToken aCancellationToken)
+            {
+                State.QueryRequests.Remove(State.QueryRequests.Find(qr => qr.Id.CompareTo(aAction.Id) == 0));
+
+                EventHandler handler = State.Changed;
+                handler?.Invoke(State, null);
+
+                return Unit.Task;
+            }
+            public DeleteQueryRequestHandler(IStore store) : base(store) { }
+        }
         public class AddNewQueryRequestHandler : ActionHandler<AddNewQueryRequestAction>
         {
             AppState State => Store.GetState<AppState>();
@@ -64,20 +96,24 @@ namespace DataBrowser.Features.AppState
         {
             AppState State => Store.GetState<AppState>();
             JsService Js { get; }
+            CloudStorageService CloudStorage { get; }
             public override async Task<Unit> Handle(GetJsonAction aAction, CancellationToken aCancellationToken)
             {
-                var query = await Js.GetEditorTextAsync(aAction.Source);
-                if (query.Length > 0)
+                var qr = State.QueryRequests.Find(qr => qr.Id.CompareTo(aAction.Id) == 0);
+                qr.Query = await Js.GetEditorTextAsync(aAction.Source);
+                if (qr.Query.Length > 0)
                 {
                     try
                     {
-                        query += ';';
-                        var result = Celin.AIS.Data.DataRequest.Parser.Before(Parser.Char(';')).ParseOrThrow(query);
+                        var result = Celin.AIS.Data.DataRequest.Parser.Before(Parser.Char(';')).ParseOrThrow(qr.Query + ';');
                         Js.SetJsonText(aAction.Destination, JsonSerializer.Serialize(result, new JsonSerializerOptions
                         {
                             IgnoreNullValues = true,
                             WriteIndented = true
                         }));
+                        var root = CloudStorage.CloudFileShare.GetRootDirectoryReference();
+                        var dest = root.GetFileReference(qr.Id.ToString());
+                        dest.UploadText(JsonSerializer.Serialize(qr, new JsonSerializerOptions { WriteIndented = true }));
                     }
                     catch (ParseException e)
                     {
@@ -86,9 +122,10 @@ namespace DataBrowser.Features.AppState
                 }
                 return Unit.Value;
             }
-            public GetJsonHandler(IStore store, JsService jsService) : base(store)
+            public GetJsonHandler(IStore store, JsService jsService, CloudStorageService cloudStorage) : base(store)
             {
                 Js = jsService;
+                CloudStorage = cloudStorage;
             }
         }
         public class LoginHandler : ActionHandler<LoginAction>

@@ -4,6 +4,14 @@ using System;
 namespace DataBrowser.Features.AppState
 {
     public class NotifyChangeAction : IAction { }
+    public class SaveQueryRequestAction : IAction
+    {
+        public Guid Id { get; set; }
+    }
+    public class DeleteQueryRequestAction : IAction
+    {
+        public Guid Id { get; set; }
+    }
     public class AddNewQueryRequestAction : IAction { }
     public class ToggleQueryRequestVisibilityAction : IAction
     {
@@ -11,6 +19,7 @@ namespace DataBrowser.Features.AppState
     }
     public class GetJsonAction : IAction
     {
+        public Guid Id { get; set; }
         public int Source { get; set; }
         public int Destination { get; set; }
     }

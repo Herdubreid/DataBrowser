@@ -1,4 +1,5 @@
 <script>
+    import { onMount } from 'svelte';
     import Prism from "./prism/prism-core";
     import './prism/prism-celinql';
     import { cqlTextsStore } from './stores';
@@ -7,17 +8,22 @@
 
     let textareaEl;
     let codeEl;
+    let mounted = false;
     
     $: code = Prism.highlight($cqlTextsStore[index], Prism.languages.celinql, "CelinQL")
         || "<em style='color: lightgray;'>Enter Command</em>";
     
-    $: textHeight = $cqlTextsStore[index].length > 0
+    $: textHeight = mounted && $cqlTextsStore[index].length > 0
         ? textareaEl.scrollHeight > textareaEl.clientHeight
             ? `${textareaEl.scrollHeight}px`
             : (codeEl.clientHeight + 24) < textareaEl.clientHeight
                 ? `${codeEl.clientHeight}px`
                 : `${textareaEl.clientHeight}px`
         : '1px';
+
+    onMount(() => {
+        mounted = true;
+    });
 </script>
 
 <style>

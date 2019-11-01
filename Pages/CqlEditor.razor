@@ -6,7 +6,7 @@
         <div class="row card-title">
             <h5 class="col"><input class="form-control border-0" readonly="@(!CanEditTitle)" @onblur="@UpdateTitle" @onfocus="@EditTitle" @bind-value="@QueryRequest.Name" /></h5>
             <div class="col-auto">
-                <button class="btn btn-sm btn-outline-danger"><i class="fas fa-trash"></i></button>
+                <button class="btn btn-sm btn-outline-danger" @onclick="@Delete"><i class="fas fa-trash"></i></button>
                 <button class="btn btn-sm btn-outline-warning" @onclick="@ToggleVisibility"><i class="fas fa-times"></i></button>
             </div>
         </div>
@@ -37,7 +37,7 @@
             activeTabIndex = value;
             if (activeTabIndex == 1)
             {
-                Mediator.Send(new GetJsonAction { Source = EditorIndex, Destination = ViewerIndex });
+                Mediator.Send(new GetJsonAction { Id = QueryRequest.Id, Source = EditorIndex, Destination = ViewerIndex });
             }
             InvokeAsync(StateHasChanged);
         }
@@ -64,6 +64,10 @@
     void ToggleVisibility()
     {
         Mediator.Send(new ToggleQueryRequestVisibilityAction { Id = QueryRequest.Id });
+    }
+    void Delete()
+    {
+        Mediator.Send(new DeleteQueryRequestAction { Id = QueryRequest.Id });
     }
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {

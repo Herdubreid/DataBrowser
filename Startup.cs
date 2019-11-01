@@ -45,6 +45,7 @@ namespace DataBrowser
             services.AddScoped<AppState>();
             services.AddScoped<E1Service>();
             services.AddScoped<JsService>();
+            services.AddScoped<CloudStorageService>();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
