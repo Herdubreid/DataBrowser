@@ -1,20 +1,44 @@
 ﻿@inherits E1BaseComponent
 
-<div class="list-group mt-2">
-    <button type="button" class="list-group-item list-group-item-action" @onclick="@AddQueryRequest"><i class="far fa-file"></i> Add</button>
-@foreach (var qr in State.QueryRequests)
-{
-    <button type="button" class="list-group-item list-group-item-action" @onclick="@(() => ToogleVisibility(qr.Id))" >@qr.Name</button>
-}
+<div class="card mt-2">
+    <div class="card-body">
+        <div  class="pr-3 pb-2">
+            <h5>Queries</h5>
+            <div class="btn-group-vertical" style="position:absolute; top:0px; right:0px">
+                <button type="button" class="btn btn-outline-primary btn-sm" @onclick="@AddQueryRequest"><i class="fa fa-plus"></i></button>
+                <button type="button" class="btn btn-outline-success btn-sm" disabled="@Busy" @onclick="@Refresh"><i class="@RefreshClass"></i></button>
+            </div>
+        </div>
+        <div class="card-subtitle">
+        </div>
+        <div class="list-group list-group-flush mt-2">
+            @foreach (var qr in State.QueryRequests)
+            {
+                <button type="button" class="list-group-item list-group-item-action" @onclick="@(() => ToogleVisibility(qr.Id))">@qr.Title</button>
+            }
+        </div>
+    </div>
 </div>
 
 @code {
+    bool Busy { get; set; }
+    string RefreshClass => $"{(@Busy ? "fas fa-sync fa-spin" : "fas fa-sync")}";
     void AddQueryRequest()
     {
-        Mediator.Send(new AddNewQueryRequestAction());
+        Mediator.Send(new AppState.AddNewQueryRequestAction());
     }
     void ToogleVisibility(Guid id)
     {
-        Mediator.Send(new ToggleQueryRequestVisibilityAction { Id = id });
+        Mediator.Send(new AppState.ToggleQueryRequestVisibilityAction { Id = id });
+    }
+    async Task Refresh()
+    {
+        Busy = true;
+        await Mediator.Send(new AppState.RefreshCloudStorageAction { StorageType = StorageType.Requests });
+        Busy = false;
+    }
+    protected override async Task OnInitializedAsync()
+    {
+        await Refresh();
     }
 }

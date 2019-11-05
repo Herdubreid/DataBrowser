@@ -3,7 +3,11 @@
     src: url('./assets/AndaleMono.ttf'), url('./assets/andalemo.ttf');
 }
 
-$font-family-base: 'AndaleMono', monospace;
+//$font-family-base: 'AndaleMono', monospace;
 
 @import '~bootstrap/scss/bootstrap';
 @import './prism/prism';
+
+.font-mono {
+    font-family: 'AndaleMono', monospace;
+}

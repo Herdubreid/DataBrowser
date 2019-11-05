@@ -1,10 +1,10 @@
 ﻿@inherits E1BaseComponent
 @inject JsService Js
 
-<div class="cards shadow m-2">
+<div class="card shadow m-2">
     <div class="card-body" style="height: 400px; width: 450px">
         <div class="row card-title">
-            <h5 class="col"><input class="form-control border-0" readonly="@(!CanEditTitle)" @onblur="@UpdateTitle" @onfocus="@EditTitle" @bind-value="@QueryRequest.Name" /></h5>
+            <h5 class="col"><input class="form-control border-0" readonly="@(!CanEditTitle)" @onblur="@UpdateTitle" @onfocus="@EditTitle" @bind-value="@Title" /></h5>
             <div class="col-auto">
                 <button class="btn btn-sm btn-outline-danger" @onclick="@Delete"><i class="fas fa-trash"></i></button>
                 <button class="btn btn-sm btn-outline-warning" @onclick="@ToggleVisibility"><i class="fas fa-times"></i></button>
@@ -12,10 +12,10 @@
         </div>
         <DxTabs @bind-ActiveTabIndex="@ActiveTabIndex">
             <DxTab Text="Edit"></DxTab>
-            <DxTab Text="Json"></DxTab>
+            <DxTab Text="Validate"></DxTab>
         </DxTabs>
-        <div class="row mt-2 ml-2" style="@BodyHeight" hidden="@(ActiveTabIndex != 0)" id="@EditorTag"></div>
-        <div class="row mt-2 ml-2" style="@BodyHeight" hidden="@(ActiveTabIndex != 1)" id="@ViewerTag"></div>
+        <div class="row mt-2 ml-2 font-mono" style="@BodyHeight" hidden="@(ActiveTabIndex != 0)" id="@EditorTag"></div>
+        <div class="row mt-2 ml-2 font-mono" style="@BodyHeight" hidden="@(ActiveTabIndex != 1)" id="@ViewerTag"></div>
         <button disabled="@(!State.Authenticated)" class="btn btn-primary">Submit</button>
     </div>
 </div>
@@ -37,7 +37,7 @@
             activeTabIndex = value;
             if (activeTabIndex == 1)
             {
-                Mediator.Send(new GetJsonAction { Id = QueryRequest.Id, Source = EditorIndex, Destination = ViewerIndex });
+                Mediator.Send(new AppState.GetJsonAction { Id = QueryRequest.Id, Source = EditorIndex, Destination = ViewerIndex });
             }
             InvokeAsync(StateHasChanged);
         }
@@ -46,28 +46,28 @@
     int ViewerIndex { get; set; }
     void EditTitle()
     {
-        Title = QueryRequest.Name;
+        Title = QueryRequest.Title;
         CanEditTitle = true;
     }
     void UpdateTitle()
     {
-        if (QueryRequest.Name.Length == 0)
+        if ((Title.Length == 0) || (Title.CompareTo(QueryRequest.Title) == 0))
         {
-            QueryRequest.Name = Title;
+            Title = QueryRequest.Title;
         }
         else
         {
-            Mediator.Send(new NotifyChangeAction());
+            Mediator.Send(new AppState.SaveQueryRequestAction { Id = QueryRequest.Id,  Title = Title });
         }
         CanEditTitle = false;
     }
     void ToggleVisibility()
     {
-        Mediator.Send(new ToggleQueryRequestVisibilityAction { Id = QueryRequest.Id });
+        Mediator.Send(new AppState.ToggleQueryRequestVisibilityAction { Id = QueryRequest.Id });
     }
     void Delete()
     {
-        Mediator.Send(new DeleteQueryRequestAction { Id = QueryRequest.Id });
+        Mediator.Send(new AppState.DeleteQueryRequestAction { Id = QueryRequest.Id });
     }
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
@@ -76,5 +76,9 @@
             EditorIndex = await Js.InitEditorAsync(EditorTag, QueryRequest.Query);
             ViewerIndex = await Js.InitJsonViewerAsync(ViewerTag, "");
         }
+    }
+    protected override void OnParametersSet()
+    {
+        Title = QueryRequest.Title;
     }
 }

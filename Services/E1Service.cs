@@ -8,7 +8,6 @@ namespace DataBrowser.Services
 {
     public class E1Service : Celin.AIS.Server
     {
-        public static readonly string SESSIONKEY = "E1";
         public async Task<Celin.AIS.AuthResponse> Login(string user, string pwd)
         {
             try
@@ -27,7 +26,7 @@ namespace DataBrowser.Services
         {
             await LogoutAsync();
         }
-        public E1Service(IConfiguration configuration, ILogger<E1Service> logger, IHttpClientFactory httpClientFactory)
-            : base(configuration["baseUrl"], logger, httpClientFactory.CreateClient()) { }
+        public E1Service(ILogger<E1Service> logger, IHttpClientFactory httpClientFactory)
+            : base("", logger, httpClientFactory.CreateClient()) { }
     }
 }

@@ -3,13 +3,13 @@
 @inject JsService Js
 
 <div class="row">
-    @foreach (var qr in QueryRequests)
+    @foreach (var qr in VisibleQueryRequests)
     {
-        <CqlEditor QueryRequest="@qr"></CqlEditor>
+        <DataBrowser.Pages.CqlEditor QueryRequest="@qr" />
     }
 </div>
 
 @code
 {
-    IEnumerable<QueryRequest> QueryRequests => State.QueryRequests.Where(qr => qr.Visible);
+    IEnumerable<QueryRequest> VisibleQueryRequests => State.QueryRequests.Where(qr => qr.Visible);
 }
