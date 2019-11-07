@@ -6,6 +6,10 @@ namespace DataBrowser.Features.AppState
 {
     public partial class AppState
     {
+        public class ViewResponseDataAction : IAction
+        {
+            public Guid DataId { get; set; }
+        }
         public class AddE1ContextAction : IAction
         {
             public string Name { get; set; }
@@ -25,11 +29,13 @@ namespace DataBrowser.Features.AppState
         {
             public Guid Id { get; set; }
         }
-        public class GetJsonAction : IAction
+        public class ValidateRequestAction : IAction
         {
             public Guid Id { get; set; }
-            public int Source { get; set; }
-            public int Destination { get; set; }
+        }
+        public class SubmitQueryAction : IAction
+        {
+            public Guid Id { get; set; }
         }
         public class RefreshCloudStorageAction : IAction
         {

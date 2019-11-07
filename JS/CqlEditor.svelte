@@ -2,24 +2,30 @@
     import { onMount } from 'svelte';
     import Prism from "./prism/prism-core";
     import './prism/prism-celinql';
-    import { cqlTextsStore } from './stores';
+    import { textMapStore } from './stores';
 
-    export let index = 0;
+    export let id;
 
     let textareaEl;
     let codeEl;
     let mounted = false;
+
+    let text = $textMapStore.get(id);
     
-    $: code = Prism.highlight($cqlTextsStore[index], Prism.languages.celinql, "CelinQL")
+    $: code = Prism.highlight(text, Prism.languages.celinql, "CelinQL")
         || "<em style='color: lightgray;'>Enter Command</em>";
     
-    $: textHeight = mounted && $cqlTextsStore[index].length > 0
+    $: textHeight = mounted && text.length > 0
         ? textareaEl.scrollHeight > textareaEl.clientHeight
             ? `${textareaEl.scrollHeight}px`
             : (codeEl.clientHeight + 24) < textareaEl.clientHeight
                 ? `${codeEl.clientHeight}px`
                 : `${textareaEl.clientHeight}px`
         : '1px';
+
+    const setText = () => {
+        $textMapStore.set(id, text);
+    };
 
     onMount(() => {
         mounted = true;
@@ -67,7 +73,7 @@
 
 <div class="col">
     <div>
-        <textarea bind:value={$cqlTextsStore[index]} spellcheck="false" style="height: {textHeight}" bind:this={textareaEl} class="editor" />
+        <textarea bind:value={text} on:blur={setText} spellcheck="false" style="height: {textHeight}" bind:this={textareaEl} class="editor" />
         <pre>
             <code bind:this={codeEl}>{@html code}</code>
         </pre>

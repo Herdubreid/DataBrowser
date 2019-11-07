@@ -45,6 +45,7 @@ namespace DataBrowser
             services.AddScoped<AppState>();
             services.AddScoped<E1Service>();
             services.AddScoped<JsService>();
+            services.AddScoped<ParserService>();
             services.AddScoped<CloudStorageService>();
         }
 

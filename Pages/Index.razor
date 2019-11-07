@@ -3,13 +3,19 @@
 @inject JsService Js
 
 <div class="row">
+    @foreach (var d in State.ResponseData)
+    {
+        <DataView @key="@d" DataId="@d"></DataView> 
+    }
+</div>
+<div class="row">
     @foreach (var qr in VisibleQueryRequests)
     {
-        <DataBrowser.Pages.CqlEditor QueryRequest="@qr" />
+        <CqlEditor @key="qr.Id" QueryRequest="@qr" />
     }
 </div>
 
 @code
 {
-    IEnumerable<QueryRequest> VisibleQueryRequests => State.QueryRequests.Where(qr => qr.Visible);
+    IEnumerable<QueryRequest> VisibleQueryRequests => State.QueryRequests.Where(qr => qr.Visible).OrderByDescending(qr => qr.Toggled);
 }

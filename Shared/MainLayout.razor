@@ -1,16 +1,44 @@
 ﻿@inherits LayoutComponentBase
 
 <div class="container-fluid">
-    <DataBrowser.Pages.Header></DataBrowser.Pages.Header>
-    <div class="main">
-        <div class="row">
-            <div class="col-auto">
-                <DataBrowser.Pages.E1ContextList></DataBrowser.Pages.E1ContextList>
-                <DataBrowser.Pages.QueryRequestList></DataBrowser.Pages.QueryRequestList>
-            </div>
-            <div class="col">
-                @Body
+    @if (Loaded)
+    {
+        <Header></Header>
+        <div class="main">
+            <div class="row">
+                <div class="col-auto">
+                    <E1ContextList></E1ContextList>
+                    <QueryRequestList></QueryRequestList>
+                    <QueryResponseList></QueryResponseList>
+                </div>
+                <div class="col">
+                    @Body
+                </div>
             </div>
         </div>
-    </div>
+    }
+    else
+    {
+        <div class="d-flex vh-100">
+            <div class="d-flex vw-100 align-items-center justify-content-center">
+                <div>
+                    <i class="fas fa-spinner fa-spin"></i>
+                    <em> Loading...</em>
+                </div>
+            </div>
+        </div>
+    }
 </div>
+
+@code {
+    bool Loaded { get; set; }
+    protected override void OnAfterRender(bool firstRender)
+    {
+        if (firstRender)
+        {
+            Loaded = true;
+            StateHasChanged();
+        }
+        base.OnAfterRender(firstRender);
+    }
+}

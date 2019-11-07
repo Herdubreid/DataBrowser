@@ -1,7 +1,4 @@
 ﻿using Microsoft.JSInterop;
-using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Threading.Tasks;
 
 namespace DataBrowser.Services
@@ -10,21 +7,21 @@ namespace DataBrowser.Services
     {
         IJSRuntime JsRuntime { get; }
         DotNetObjectReference<JsService> ObjectReference { get; }
-        public async Task<int> InitEditorAsync(string id, string text)
+        public void InitEditor(string id, string text)
         {
-            return await JsRuntime.InvokeAsync<int>("window.cqlEditor.init", id, text);
+            JsRuntime.InvokeVoidAsync("window.cqlEditor.init", id, text);
         }
-        public async Task<string> GetEditorTextAsync(int index)
+        public async Task<string> GetEditorTextAsync(string id)
         {
-            return await JsRuntime.InvokeAsync<string>("window.cqlEditor.getText", index);
+            return await JsRuntime.InvokeAsync<string>("window.cqlEditor.getText", id);
         }
-        public async Task<int> InitJsonViewerAsync(string id, string text)
+        public void InitJsonViewer(string id, string text)
         {
-            return await JsRuntime.InvokeAsync<int>("window.jsonViewer.init", id, text);
+            JsRuntime.InvokeVoidAsync("window.jsonViewer.init", id, text);
         }
-        public void SetJsonText(int index, string text)
+        public void SetJsonText(string id, string text)
         {
-            JsRuntime.InvokeVoidAsync("window.jsonViewer.setText", index, text);
+            JsRuntime.InvokeVoidAsync("window.jsonViewer.setText", id, text);
         }
         public JsService(IJSRuntime jsRuntime)
         {

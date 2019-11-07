@@ -1,5 +1,6 @@
 ﻿@inherits E1BaseComponent
 @inject JsService Js
+@inject ParserService Parser
 
 <div class="card shadow m-2">
     <div class="card-body" style="height: 400px; width: 450px">
@@ -16,7 +17,7 @@
         </DxTabs>
         <div class="row mt-2 ml-2 font-mono" style="@BodyHeight" hidden="@(ActiveTabIndex != 0)" id="@EditorTag"></div>
         <div class="row mt-2 ml-2 font-mono" style="@BodyHeight" hidden="@(ActiveTabIndex != 1)" id="@ViewerTag"></div>
-        <button disabled="@(!State.Authenticated)" class="btn btn-primary">Submit</button>
+        <button disabled="@(!State.Authenticated)" class="btn btn-primary" @onclick="@SubmitQuery" >Submit</button>
     </div>
 </div>
 
@@ -37,13 +38,29 @@
             activeTabIndex = value;
             if (activeTabIndex == 1)
             {
-                Mediator.Send(new AppState.GetJsonAction { Id = QueryRequest.Id, Source = EditorIndex, Destination = ViewerIndex });
+                _ = Validate();
             }
             InvokeAsync(StateHasChanged);
         }
     }
-    int EditorIndex { get; set; }
-    int ViewerIndex { get; set; }
+    async Task Validate()
+    {
+        var qry = await Js.GetEditorTextAsync(QueryRequest.Id.ToString());
+        Js.SetJsonText(QueryRequest.Id.ToString(), Parser.ToString(qry));
+    }
+    async Task SubmitQuery()
+    {
+        var qry = await Js.GetEditorTextAsync(QueryRequest.Id.ToString());
+        try
+        {
+            var request = Parser.Parse(qry);
+            await Mediator.Send(new AppState.SubmitQueryAction { Id = QueryRequest.Id });
+        }
+        catch (Exception e)
+        {
+            ActiveTabIndex = 1;
+        }
+    }
     void EditTitle()
     {
         Title = QueryRequest.Title;
@@ -69,12 +86,12 @@
     {
         Mediator.Send(new AppState.DeleteQueryRequestAction { Id = QueryRequest.Id });
     }
-    protected override async Task OnAfterRenderAsync(bool firstRender)
+    protected override void OnAfterRender(bool firstRender)
     {
         if (firstRender)
         {
-            EditorIndex = await Js.InitEditorAsync(EditorTag, QueryRequest.Query);
-            ViewerIndex = await Js.InitJsonViewerAsync(ViewerTag, "");
+            Js.InitEditor(QueryRequest.Id.ToString(), QueryRequest.Query);
+            Js.InitJsonViewer(QueryRequest.Id.ToString(), string.Empty);
         }
     }
     protected override void OnParametersSet()

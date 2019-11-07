@@ -2,9 +2,6 @@
 @inject JsService  Js
 
 <div class="navbar fixed-top navbar-light bg-light">
-    <div class="col-auto">
-        <NavLink href="/"><i class="fas fa-home"></i></NavLink>
-    </div>
     <div class="col">
         @if  (State.Authenticated)
         {
@@ -18,7 +15,7 @@
         }
     </div>
     <div class="col-auto">
-        <button class="btn btn-warning" @onclick="@Logout"><i class="fas fa-sign-out-alt"></i></button>
+        <button class="btn btn-warning btn-sm" @onclick="@Logout"><i class="fas fa-sign-out-alt"></i></button>
     </div>
 </div>
 

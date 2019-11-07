@@ -11,5 +11,6 @@ namespace DataBrowser.Features.AppState
     public class QueryRequest : SaveQueryRequest
     {
         public bool Visible { get; set; }
+        public DateTime Toggled { get; set; }
     }
 }

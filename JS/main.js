@@ -1,72 +1,65 @@
 ﻿import './style.scss';
 import { get } from 'svelte/store';
-import { cqlTextsStore, jsonTextsStore } from './stores';
+import { textMapStore } from './stores';
 import CqlEditor from './CqlEditor.svelte';
 import JsonViewer from './JsonViewer.svelte';
 
-let cqlEditors = [];
+const cqlEditors = new Map();
+const cqlEditorId = (id) => `${id}-edit`;
 window.cqlEditor = {
     init: (id, text) => {
-        const target = document.getElementById(id);
-        let index = cqlEditors.length;
-        cqlTextsStore.update(t => {
-            t.push(text);
-            return t;
+        const target = document.getElementById(cqlEditorId(id));
+        textMapStore.update(m => {
+            m.set(cqlEditorId(id), text);
+            return m;
         });
-        cqlEditors.push(new CqlEditor({
+        cqlEditors.set(id, new CqlEditor({
             target,
             props: {
-                index
+                id: cqlEditorId(id)
             }
         }));
-        return index;
     },
-    clear: (index) => {
-        cqlTextsStore.update(t => {
-            t[index] = "";
-            return t;
-        });
-        editor.$destroy();
+    clear: (id) => {
+        get(textMapStore).delete(cqlEditorId(id));
+        cqlEditors.get(id).$destroy();
     },
-    getText: (index) => {
-        return get(cqlTextsStore)[index];
+    getText: (id) => {
+        var m = get(textMapStore);
+        return m.get(cqlEditorId(id));
     },
-    setText: (index, text) => {
-        cqlTextsStore.update(t => {
-            t[index] = text;
-            return t;
+    setText: (id, text) => {
+        textMapStore.update(m => {
+            m.set(cqlEditorId(id), text);
+            return m;
         });
     }
 }
 
-let jsonViewers = [];
+const jsonViewers = new Map();
+const jsonViewerId = (id) => `${id}-view`;
 window.jsonViewer = {
     init: (id, text) => {
-        const target = document.getElementById(id);
-        let index = jsonViewers.length;
-        jsonTextsStore.update(t => {
-            t.push(text);
-            return t;
+        const target = document.getElementById(jsonViewerId(id));
+        textMapStore.update(m => {
+            m.set(jsonViewerId(id), text);
+            return m;
         });
-        jsonViewers.push(new JsonViewer({
+        jsonViewers.set(id, new JsonViewer({
             target,
             props: {
-                index
+                id: jsonViewerId(id)
             }
         }));
-        return index;
     },
-    clear: (index) => {
-        jsonTextsStore.update(t => {
-            t[index] = "";
-            return t;
-        });
-        jsonViewers[index].$destroy();
+    clear: (id) => {
+        get(textMapStore).delete(jsonViewer(id));
+        jsonViewers.get(id).$destroy();
     },
-    setText: (index, text) => {
-        jsonTextsStore.update(t => {
-            t[index] = text;
-            return t;
+    setText: (id, text) => {
+        textMapStore.update(m => {
+            m.set(jsonViewerId(id), text);
+            return m;
         });
     }
 }

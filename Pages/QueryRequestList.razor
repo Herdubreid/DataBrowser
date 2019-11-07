@@ -9,8 +9,6 @@
                 <button type="button" class="btn btn-outline-success btn-sm" disabled="@Busy" @onclick="@Refresh"><i class="@RefreshClass"></i></button>
             </div>
         </div>
-        <div class="card-subtitle">
-        </div>
         <div class="list-group list-group-flush mt-2">
             @foreach (var qr in State.QueryRequests)
             {

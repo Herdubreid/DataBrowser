@@ -1,11 +1,11 @@
 <script>
     import Prism from "./prism/prism-core";
     import './prism/prism-json';
-    import { jsonTextsStore } from './stores';
+    import { textMapStore } from './stores';
 
-    export let index = 0;
+    export let id;
 
-    $: code = Prism.highlight($jsonTextsStore[index], Prism.languages.json, "JSON")
+    $: code = Prism.highlight($textMapStore.get(id), Prism.languages.json, "JSON")
         || "<em style='color: lightgray;'>No Content</em>";
 
 </script>

@@ -1,0 +1,58 @@
+﻿@using System.Text.Json
+
+@inherits E1BaseComponent
+@inject CloudStorageService CloudStorage
+
+<div class="card shadow m-2">
+    <div class="card-body">
+        @if (Rows != null)
+        {
+            <DxDataGrid Data="@Rows" T="@(IDictionary<string, JsonElement>)">
+                    <DxDataGridColumn Field="F0101_AN8" Caption="AN8">
+                        <DisplayTemplate>
+                            @(ToInt("F0101_AN8", (IDictionary<string, JsonElement>)context))
+                        </DisplayTemplate>
+                    </DxDataGridColumn>
+                    <DxDataGridColumn Field="F0101_ALPH" Caption="ALPH"></DxDataGridColumn>
+            </DxDataGrid>
+        }
+        <div class="row">
+            <label class="col text-danger">@Error</label>
+        </div>
+    </div>
+</div>
+
+@code {
+    [Parameter]
+    public Guid DataId { get; set; }
+
+    int ToInt(string name, IDictionary<string, JsonElement> el) => (int)el[name].GetInt32();
+    List<IDictionary<string, JsonElement>> Rows { get; set; }
+    List<string> Columns { get; set; } = new List<string>();
+    string Error { get; set; }
+
+    protected override async Task OnParametersSetAsync()
+    {
+        var source = CloudStorage
+            .ResponsesDirectory
+            .GetDirectoryReference("data")
+            .GetFileReference(DataId.ToString());
+        if (source.Exists())
+        {
+            var t = await source.DownloadTextAsync();
+            try
+            {
+                var data = JsonSerializer.Deserialize<QueryResponseData<IDictionary<string, JsonElement>>>(t);
+                if (data.rowset != null)
+                {
+                    Columns.Add("F0101_AN8");
+                    Rows = data.rowset.ToList();
+                }
+            }
+            catch (Exception e)
+            {
+                Error = e.Message;
+            }
+        }
+    }
+}

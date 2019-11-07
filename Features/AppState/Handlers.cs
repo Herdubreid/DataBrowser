@@ -13,6 +13,23 @@ namespace DataBrowser.Features.AppState
 {
     public partial class AppState
     {
+        public class ViewResponseDataHandler : ActionHandler<ViewResponseDataAction>
+        {
+            AppState State => Store.GetState<AppState>();
+            public override Task<Unit> Handle(ViewResponseDataAction aAction, CancellationToken aCancellationToken)
+            {
+                if (!State.ResponseData.Contains(aAction.DataId))
+                {
+                    State.ResponseData.Insert(0, aAction.DataId);
+
+                    EventHandler handler = State.Changed;
+                    handler?.Invoke(State, null);
+                }
+
+                return Unit.Task;
+            }
+            public ViewResponseDataHandler(IStore store) : base(store) { }
+        }
         public class AddE1ContextHandler : ActionHandler<AddE1ContextAction>
         {
             AppState State => Store.GetState<AppState>();
@@ -85,9 +102,11 @@ namespace DataBrowser.Features.AppState
                 {
                     Id = Guid.NewGuid(),
                     Visible = true,
-                    Title = $"New-{State.QueryRequests.Count}"
+                    Title = $"New-{State.QueryRequests.Count}",
+                    Query = string.Empty,
+                    Toggled = DateTime.Now
                 };
-                State.QueryRequests.Insert(0, qr);
+                State.QueryRequests.Add(qr);
 
                 EventHandler handler = State.Changed;
                 handler?.Invoke(State, null);
@@ -103,6 +122,7 @@ namespace DataBrowser.Features.AppState
             {
                 var qr = State.QueryRequests.Find(qr => qr.Id.CompareTo(aAction.Id) == 0);
                 qr.Visible = !qr.Visible;
+                qr.Toggled = DateTime.Now;
 
                 EventHandler handler = State.Changed;
                 handler?.Invoke(State, null);
@@ -111,21 +131,56 @@ namespace DataBrowser.Features.AppState
             }
             public ToggleQueryRequestVisibilityHandler(IStore store) : base(store) { }
         }
-        public class GetJsonHandler : ActionHandler<GetJsonAction>
+        public class SubmitQueryHandler : ActionHandler<SubmitQueryAction>
+        {
+            AppState State => Store.GetState<AppState>();
+            JsService Js { get; }
+            E1Service E1 { get; }
+            CloudStorageService CloudStorage { get; }
+            public override async Task<Unit> Handle(SubmitQueryAction aAction, CancellationToken aCancellationToken)
+            {
+                var qr = State.QueryRequests.Find(qr => qr.Id.CompareTo(aAction.Id) == 0);
+                qr.Query = await Js.GetEditorTextAsync(qr.Id.ToString());
+                if (qr.Query.Length > 0)
+                {
+                    try
+                    {
+                        var request = Celin.AIS.Data.DataRequest.Parser.Before(Parser.Char(';')).ParseOrThrow(qr.Query + ';');
+                        var rsp = new QueryResponse { Id = Guid.NewGuid(), Query = qr.Query };
+                        State.QueryResponses.Insert(0, rsp);
+                        EventHandler handler = State.Changed;
+                        _ = rsp.Submit(E1, request, handler, CloudStorage.ResponsesDirectory);
+                    }
+                    catch (ParseException e)
+                    {
+                        Js.SetJsonText(qr.Id.ToString(), e.Message);
+                    }
+                }
+
+                return Unit.Value;
+            }
+            public SubmitQueryHandler(IStore store, JsService jsService, E1Service e1Service, CloudStorageService cloudStorage) : base(store)
+            {
+                Js = jsService;
+                E1 = e1Service;
+                CloudStorage = cloudStorage;
+            }
+        }
+        public class ValidateRequestHandler : ActionHandler<ValidateRequestAction>
         {
             AppState State => Store.GetState<AppState>();
             JsService Js { get; }
             CloudStorageService CloudStorage { get; }
-            public override async Task<Unit> Handle(GetJsonAction aAction, CancellationToken aCancellationToken)
+            public override async Task<Unit> Handle(ValidateRequestAction aAction, CancellationToken aCancellationToken)
             {
                 var qr = State.QueryRequests.Find(qr => qr.Id.CompareTo(aAction.Id) == 0);
-                qr.Query = await Js.GetEditorTextAsync(aAction.Source);
+                qr.Query = await Js.GetEditorTextAsync(aAction.Id.ToString());
                 if (qr.Query.Length > 0)
                 {
                     try
                     {
                         var result = Celin.AIS.Data.DataRequest.Parser.Before(Parser.Char(';')).ParseOrThrow(qr.Query + ';');
-                        Js.SetJsonText(aAction.Destination, JsonSerializer.Serialize(result, new JsonSerializerOptions
+                        Js.SetJsonText(aAction.Id.ToString(), JsonSerializer.Serialize(result, new JsonSerializerOptions
                         {
                             IgnoreNullValues = true,
                             WriteIndented = true
@@ -135,12 +190,12 @@ namespace DataBrowser.Features.AppState
                     }
                     catch (ParseException e)
                     {
-                        Js.SetJsonText(aAction.Destination, e.Message);
+                        Js.SetJsonText(aAction.Id.ToString(), e.Message);
                     }
                 }
                 return Unit.Value;
             }
-            public GetJsonHandler(IStore store, JsService jsService, CloudStorageService cloudStorage) : base(store)
+            public ValidateRequestHandler(IStore store, JsService jsService, CloudStorageService cloudStorage) : base(store)
             {
                 Js = jsService;
                 CloudStorage = cloudStorage;
@@ -184,6 +239,23 @@ namespace DataBrowser.Features.AppState
                                 if (!State.QueryRequests.Exists(qr => qr.Id.CompareTo(newQr.Id) == 0))
                                 {
                                     State.QueryRequests.Add(newQr);
+                                }
+                            }
+                            catch { }
+                        }
+                        break;
+                    case StorageType.Responses:
+                        var responses = CloudStorage.ResponsesDirectory;
+                        foreach (var f in responses.ListFilesAndDirectories().OfType<CloudFile>())
+                        {
+                            var source = responses.GetFileReference((f as CloudFile).Name);
+                            try
+                            {
+                                var t = await source.DownloadTextAsync();
+                                var newRsp = JsonSerializer.Deserialize<QueryResponse>(t);
+                                if (!State.QueryResponses.Exists(rsp => rsp.Id.CompareTo(newRsp.Id) == 0))
+                                {
+                                    State.QueryResponses.Add(newRsp);
                                 }
                             }
                             catch { }
