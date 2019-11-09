@@ -21,6 +21,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\Celin.AIS.Data\Celin.AIS.Data.csproj" />
     <ProjectReference Include="..\Celin.AIS\Celin.AIS.csproj" />
   </ItemGroup>
 </Project>

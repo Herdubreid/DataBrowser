@@ -10,8 +10,8 @@
 
 </script>
 <style>
-    .col {
-        overflow: auto;
+    div.col {
+        overflow-y: auto;
     }
     code {
         left: 0;

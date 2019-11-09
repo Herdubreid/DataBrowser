@@ -4,10 +4,16 @@ using DataBrowser.Services;
 
 namespace DataBrowser.Features.AppState
 {
+    public enum ResponseAction
+    {
+        VIEW,
+        DELETE
+    }
     public partial class AppState
     {
-        public class ViewResponseDataAction : IAction
+        public class ResponseDataAction : IAction
         {
+            public ResponseAction Action { get; set; }
             public Guid DataId { get; set; }
         }
         public class AddE1ContextAction : IAction

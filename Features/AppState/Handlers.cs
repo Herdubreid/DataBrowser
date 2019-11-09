@@ -13,22 +13,42 @@ namespace DataBrowser.Features.AppState
 {
     public partial class AppState
     {
-        public class ViewResponseDataHandler : ActionHandler<ViewResponseDataAction>
+        public class ViewResponseDataHandler : ActionHandler<ResponseDataAction>
         {
             AppState State => Store.GetState<AppState>();
-            public override Task<Unit> Handle(ViewResponseDataAction aAction, CancellationToken aCancellationToken)
+            CloudStorageService CloudStorage { get; }
+            public override Task<Unit> Handle(ResponseDataAction aAction, CancellationToken aCancellationToken)
             {
-                if (!State.ResponseData.Contains(aAction.DataId))
+                switch (aAction.Action)
                 {
-                    State.ResponseData.Insert(0, aAction.DataId);
-
-                    EventHandler handler = State.Changed;
-                    handler?.Invoke(State, null);
+                    case ResponseAction.VIEW:
+                        State.ResponseData.Insert(0, aAction.DataId);
+                        break;
+                    case ResponseAction.DELETE:
+                        State.ResponseData.Remove(aAction.DataId);
+                        State.QueryResponses.Remove(State.QueryResponses.Find(r => r.Id.CompareTo(aAction.DataId) == 0));
+                        var source = CloudStorage.ResponsesDirectory.GetFileReference(aAction.DataId.ToString());
+                        if (source.Exists())
+                        {
+                            source.DeleteAsync();
+                        }
+                        var data = CloudStorage.ResponsesDirectory.GetDirectoryReference("data").GetFileReference(aAction.DataId.ToString());
+                        if (data.Exists())
+                        {
+                            data.DeleteAsync();
+                        }
+                        break;
                 }
+
+                EventHandler handler = State.Changed;
+                handler?.Invoke(State, null);
 
                 return Unit.Task;
             }
-            public ViewResponseDataHandler(IStore store) : base(store) { }
+            public ViewResponseDataHandler(IStore store, CloudStorageService cloudStorage) : base(store)
+            {
+                CloudStorage = cloudStorage;
+            }
         }
         public class AddE1ContextHandler : ActionHandler<AddE1ContextAction>
         {

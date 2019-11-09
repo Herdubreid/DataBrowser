@@ -33,8 +33,8 @@
 </script>
 
 <style>
-    .col {
-        overflow: auto;
+    div.col {
+        overflow-y: auto;
 	}
     textarea,
     code {
@@ -42,6 +42,7 @@
         padding: 0px;
         border: 0;
         left: 0;
+        word-break: break-all;
         overflow: visible;
         position: absolute;
         font-family: inherit;

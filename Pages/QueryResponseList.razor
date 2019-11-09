@@ -32,7 +32,7 @@
                         else
                         {
                             <div class="btn-group-sm">
-                                <button type="button" class="btn btn-outline-danger btn-sm"><i class="fa fa-times"></i></button>
+                                <button type="button" class="btn btn-outline-danger btn-sm" @onclick="@(() => Delete(rsp.Id))"><i class="fa fa-trash"></i></button>
                                 <button type="button" class="btn btn-outline-success btn-sm" @onclick="@(() => ViewData(rsp.Id))">View @rsp.Count rows <i class="fa fa-check"></i></button>
                             </div>
                         }
@@ -52,9 +52,13 @@
 @code {
     bool Busy { get; set; }
     string RefreshClass => $"{(@Busy ? "fas fa-sync fa-spin" : "fas fa-sync")}";
+    void Delete(Guid id)
+    {
+        Mediator.Send(new AppState.ResponseDataAction { Action = ResponseAction.DELETE, DataId = id });
+    }
     void ViewData(Guid id)
     {
-        Mediator.Send(new AppState.ViewResponseDataAction { DataId = id });
+        Mediator.Send(new AppState.ResponseDataAction { Action = ResponseAction.VIEW, DataId = id });
     }
     async Task Refresh()
     {

@@ -10,7 +10,7 @@
         {
             <div class="text-monospace" style="width:700px; font-size:12px">
                 <DxDataGrid Data="@Rows"
-                            T="@object"
+                            T="@DynamicJsonElement"
                             AllowSort="false"
                             ShowFilterRow="false"
                             PageSize="100"
@@ -20,11 +20,27 @@
                             HorizontalScrollBarMode="@ScrollBarMode.Auto">
                     @foreach (var col in Columns)
                     {
-                        <DxDataGridColumn Field="@col.Key"
-                                          Caption="@col.Key"
-                                          Width="130px"
-                                          TextAlignment="@(col.Value == JsonValueKind.Number ? DataGridTextAlign.Right : DataGridTextAlign.Left)">
-                        </DxDataGridColumn>
+                        if (col.Value == JsonValueKind.Object)
+                        {
+                            <DxDataGridColumn Field="groupBy" Caption="@($"groupBy.{col.Key}")">
+                                <DisplayTemplate Context="data">
+                                    @{
+                                        var el = (data as DynamicJsonElement).Element;
+                                        var g = el.GetProperty("groupBy");
+                                        var p = g.GetProperty(col.Key);
+                                        <p>@p.ToString()</p>
+                                    }
+                                </DisplayTemplate>
+                            </DxDataGridColumn>
+                        }
+                        else
+                        {
+                            <DxDataGridColumn Field="@col.Key"
+                                              Caption="@col.Key"
+                                              Width="130px"
+                                              TextAlignment="@(col.Value == JsonValueKind.Number ? DataGridTextAlign.Right : DataGridTextAlign.Left)">
+                            </DxDataGridColumn>
+                        }
                     }
                 </DxDataGrid>
             </div>
@@ -46,41 +62,71 @@
     [Parameter]
     public Guid DataId { get; set; }
 
-    IEnumerable<dynamic> Rows { get; set; }
+    IEnumerable<DynamicJsonElement> Rows { get; set; }
     List<KeyValuePair<string, JsonValueKind>> Columns { get; set; } = new List<KeyValuePair<string, JsonValueKind>>();
     string Error { get; set; }
 
-    protected override async Task OnParametersSetAsync()
+    protected override async Task OnAfterRenderAsync(bool firstRender)
     {
-        var source = CloudStorage
-            .ResponsesDirectory
-            .GetDirectoryReference("data")
-            .GetFileReference(DataId.ToString());
-        if (source.Exists())
+        if (firstRender)
         {
-            var t = await source.DownloadTextAsync();
-            try
+
+            var source = CloudStorage
+                .ResponsesDirectory
+                .GetDirectoryReference("data")
+                .GetFileReference(DataId.ToString());
+            if (source.Exists())
             {
-                var data = JsonSerializer.Deserialize<QueryResponseData<System.Dynamic.ExpandoObject>>(t);
-                //var data = JsonSerializer.Deserialize<QueryResponseData<IDictionary<string, JsonElement>>>(t);
-                if (data.rowset != null)
+                var t = await source.DownloadTextAsync();
+                try
                 {
-                    var it = data.rowset.GetEnumerator();
-                    if (it.MoveNext())
+                    var data = JsonSerializer.Deserialize<QueryResponseData<DynamicJsonElement>>(t, new JsonSerializerOptions
                     {
-                        foreach (var col in it.Current)
+                        Converters = { new DynamicJsonConverter() }
+                    });
+                    if (data.rowset != null)
+                    {
+                        var it = data.rowset.GetEnumerator();
+                        if (it.MoveNext())
                         {
-                            var kind = col.Value == null ? JsonValueKind.String : ((JsonElement)col.Value).ValueKind;
-                            Columns.Add(new KeyValuePair<string, JsonValueKind>(col.Key, kind));
+                            foreach (var col in it.Current)
+                            {
+                                Columns.Add(new KeyValuePair<string, JsonValueKind>(col.Name, col.Value.ValueKind));
+                            }
                         }
+                        Rows = data.rowset;
                     }
-                    Rows = data.rowset;
+                    else
+                    {
+                        var it = data.output.GetEnumerator();
+                        if (it.MoveNext())
+                        {
+                            foreach (var col in it.Current)
+                            {
+                                var kind = col.Value.ValueKind;
+                                if (kind == JsonValueKind.Object)
+                                {
+                                    foreach (var sub in ((JsonElement)col.Value).EnumerateObject())
+                                    {
+                                        Columns.Add(new KeyValuePair<string, JsonValueKind>(sub.Name, kind));
+                                    }
+                                }
+                                else
+                                {
+                                    Columns.Add(new KeyValuePair<string, JsonValueKind>(col.Name, kind));
+                                }
+                            }
+                        }
+                        Rows = data.output;
+                    }
+                }
+                catch (Exception e)
+                {
+                    Error = e.Message;
+                    Rows = Enumerable.Empty<DynamicJsonElement>();
                 }
             }
-            catch (Exception e)
-            {
-                Error = e.Message;
-            }
+            await InvokeAsync(StateHasChanged);
         }
     }
 }

@@ -5,7 +5,7 @@ using System.Collections.Generic;
 using System.Text.Json;
 using System.Threading.Tasks;
 
-namespace DataBrowser.Features.AppState
+namespace DataBrowser.Features
 {
     using Fs = Celin.AIS.Form<Celin.AIS.FormData<JsonElement>>;
     public class QueryResponseData<T>

@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace DataBrowser.Features.AppState
+namespace DataBrowser.Features
 {
     public class SaveQueryRequest
     {
