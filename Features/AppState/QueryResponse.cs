@@ -46,10 +46,7 @@ namespace DataBrowser.Features.AppState
                         var fm = JsonSerializer.Deserialize<Fs>(it.Current.Value.ToString());
                         summary = fm.data.gridData.summary;
                         Count = summary.records;
-                        data = new QueryResponseData<JsonElement>
-                        {
-                            rowset = fm.data.gridData.rowset
-                        };
+                        data = new QueryResponseData<JsonElement> { rowset = fm.data.gridData.rowset };
                     }
                     else
                     {
@@ -61,10 +58,11 @@ namespace DataBrowser.Features.AppState
                     if (Count > 0)
                     {
                         var dest = fileDirectory.GetFileReference(Id.ToString());
-                        await dest.UploadTextAsync(JsonSerializer.Serialize(this, typeof(SaveQueryResponse), new JsonSerializerOptions
-                        {
-                            WriteIndented = true
-                        }));
+                        await dest.UploadTextAsync(JsonSerializer.Serialize(this, typeof(SaveQueryResponse),
+                            new JsonSerializerOptions
+                            {
+                                WriteIndented = true
+                            }));
                         var destData = fileDirectory.GetDirectoryReference("data").GetFileReference(Id.ToString());
                         await destData.UploadTextAsync(JsonSerializer.Serialize(data, new JsonSerializerOptions { WriteIndented = true }));
                     }

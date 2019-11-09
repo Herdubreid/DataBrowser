@@ -2,19 +2,39 @@
 
 @inherits E1BaseComponent
 @inject CloudStorageService CloudStorage
-
+<!--
+-->
 <div class="card shadow m-2">
     <div class="card-body">
         @if (Rows != null)
         {
-            <DxDataGrid Data="@Rows" T="@(IDictionary<string, JsonElement>)">
-                    <DxDataGridColumn Field="F0101_AN8" Caption="AN8">
-                        <DisplayTemplate>
-                            @(ToInt("F0101_AN8", (IDictionary<string, JsonElement>)context))
-                        </DisplayTemplate>
-                    </DxDataGridColumn>
-                    <DxDataGridColumn Field="F0101_ALPH" Caption="ALPH"></DxDataGridColumn>
-            </DxDataGrid>
+            <div class="text-monospace" style="width:700px; font-size:12px">
+                <DxDataGrid Data="@Rows"
+                            T="@object"
+                            AllowSort="false"
+                            ShowFilterRow="false"
+                            PageSize="100"
+                            DataNavigationMode="@DataGridNavigationMode.VirtualScrolling"
+                            VerticalScrollableHeight="400"
+                            VerticalScrollBarMode="@ScrollBarMode.Auto"
+                            HorizontalScrollBarMode="@ScrollBarMode.Auto">
+                    @foreach (var col in Columns)
+                    {
+                        <DxDataGridColumn Field="@col.Key"
+                                          Caption="@col.Key"
+                                          Width="130px"
+                                          TextAlignment="@(col.Value == JsonValueKind.Number ? DataGridTextAlign.Right : DataGridTextAlign.Left)">
+                        </DxDataGridColumn>
+                    }
+                </DxDataGrid>
+            </div>
+        }
+        else
+        {
+            <div>
+                <i class="fas fa-spinner fa-spin"></i>
+                <em> Loading...</em>
+            </div>
         }
         <div class="row">
             <label class="col text-danger">@Error</label>
@@ -26,9 +46,8 @@
     [Parameter]
     public Guid DataId { get; set; }
 
-    int ToInt(string name, IDictionary<string, JsonElement> el) => (int)el[name].GetInt32();
-    List<IDictionary<string, JsonElement>> Rows { get; set; }
-    List<string> Columns { get; set; } = new List<string>();
+    IEnumerable<dynamic> Rows { get; set; }
+    List<KeyValuePair<string, JsonValueKind>> Columns { get; set; } = new List<KeyValuePair<string, JsonValueKind>>();
     string Error { get; set; }
 
     protected override async Task OnParametersSetAsync()
@@ -42,11 +61,20 @@
             var t = await source.DownloadTextAsync();
             try
             {
-                var data = JsonSerializer.Deserialize<QueryResponseData<IDictionary<string, JsonElement>>>(t);
+                var data = JsonSerializer.Deserialize<QueryResponseData<System.Dynamic.ExpandoObject>>(t);
+                //var data = JsonSerializer.Deserialize<QueryResponseData<IDictionary<string, JsonElement>>>(t);
                 if (data.rowset != null)
                 {
-                    Columns.Add("F0101_AN8");
-                    Rows = data.rowset.ToList();
+                    var it = data.rowset.GetEnumerator();
+                    if (it.MoveNext())
+                    {
+                        foreach (var col in it.Current)
+                        {
+                            var kind = col.Value == null ? JsonValueKind.String : ((JsonElement)col.Value).ValueKind;
+                            Columns.Add(new KeyValuePair<string, JsonValueKind>(col.Key, kind));
+                        }
+                    }
+                    Rows = data.rowset;
                 }
             }
             catch (Exception e)
