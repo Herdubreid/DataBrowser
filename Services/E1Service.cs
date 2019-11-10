@@ -1,12 +1,24 @@
 ﻿using Microsoft.Extensions.Logging;
 using System;
+using System.Collections.Generic;
 using System.Net.Http;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace DataBrowser.Services
 {
     public class E1Service : Celin.AIS.Server
     {
+        public IDictionary<Guid, CancellationTokenSource> CancelTokens { get; }
+            = new Dictionary<Guid, CancellationTokenSource>();
+        public void CancelRequest(Guid id)
+        {
+            CancellationTokenSource cancel;
+            if (CancelTokens.TryGetValue(id, out cancel))
+            {
+                cancel.Cancel();
+            }
+        }
         public async Task<Celin.AIS.AuthResponse> Login(string user, string pwd)
         {
             try

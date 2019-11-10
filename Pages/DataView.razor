@@ -6,6 +6,12 @@
 -->
 <div class="card shadow m-2">
     <div class="card-body">
+        <div class="row card-title">
+            <h5 class="col">@QueryResponse.title</h5>
+            <div class="col-auto">
+                <button class="btn btn-outline-warning btn-sm" @onclick="@Remove"><i class="fas fa-times"></i></button>
+            </div>
+        </div>
         @if (Rows != null)
         {
             <div class="text-monospace" style="width:700px; font-size:12px">
@@ -62,15 +68,17 @@
     [Parameter]
     public Guid DataId { get; set; }
 
+    QueryResponse QueryResponse { get; set; }
     IEnumerable<DynamicJsonElement> Rows { get; set; }
     List<KeyValuePair<string, JsonValueKind>> Columns { get; set; } = new List<KeyValuePair<string, JsonValueKind>>();
     string Error { get; set; }
+
+    void Remove() => Mediator.Send(new AppState.ResponseDataAction { Action = ResponseAction.REMOVE, DataId = DataId });
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
         if (firstRender)
         {
-
             var source = CloudStorage
                 .ResponsesDirectory
                 .GetDirectoryReference("data")
@@ -128,5 +136,9 @@
             }
             await InvokeAsync(StateHasChanged);
         }
+    }
+    protected override void OnParametersSet()
+    {
+        QueryResponse = State.QueryResponses.Find(r => r.Id.CompareTo(DataId) == 0);
     }
 }

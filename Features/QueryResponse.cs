@@ -3,6 +3,7 @@ using Microsoft.Azure.Storage.File;
 using System;
 using System.Collections.Generic;
 using System.Text.Json;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace DataBrowser.Features
@@ -26,7 +27,7 @@ namespace DataBrowser.Features
     {
         public string Error { get; set; }
         public bool Busy { get; set; }
-        public async Task Submit(E1Service e1, Celin.AIS.DatabrowserRequest request, EventHandler handler, CloudFileDirectory fileDirectory)
+        public async Task Submit(E1Service e1, Guid id, Celin.AIS.DatabrowserRequest request, EventHandler handler, CloudFileDirectory fileDirectory)
         {
             Busy = true;
             title = "Working...";
@@ -34,7 +35,9 @@ namespace DataBrowser.Features
             try
             {
                 handler?.Invoke(this, null);
-                var result = await e1.RequestAsync<JsonElement>(request);
+                var cancel = new CancellationTokenSource();
+                e1.CancelTokens.Add(id, cancel);
+                var result = await e1.RequestAsync<JsonElement>(request, cancel);
                 var it = result.EnumerateObject();
                 QueryResponseData<JsonElement> data;
                 if (it.MoveNext())
@@ -68,9 +71,13 @@ namespace DataBrowser.Features
                     }
                 }
             }
-            catch (Celin.AIS.HttpWebException e)
+            catch (Exception e)
             {
                 Error = e.Message;
+            }
+            finally
+            {
+                e1.CancelTokens.Remove(id);
             }
             Busy = false;
             handler?.Invoke(this, null);

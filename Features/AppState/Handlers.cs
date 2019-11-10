@@ -24,6 +24,9 @@ namespace DataBrowser.Features.AppState
                     case ResponseAction.VIEW:
                         State.ResponseData.Insert(0, aAction.DataId);
                         break;
+                    case ResponseAction.REMOVE:
+                        State.ResponseData.Remove(aAction.DataId);
+                        break;
                     case ResponseAction.DELETE:
                         State.ResponseData.Remove(aAction.DataId);
                         State.QueryResponses.Remove(State.QueryResponses.Find(r => r.Id.CompareTo(aAction.DataId) == 0));
@@ -169,7 +172,7 @@ namespace DataBrowser.Features.AppState
                         var rsp = new QueryResponse { Id = Guid.NewGuid(), Query = qr.Query };
                         State.QueryResponses.Insert(0, rsp);
                         EventHandler handler = State.Changed;
-                        _ = rsp.Submit(E1, request, handler, CloudStorage.ResponsesDirectory);
+                        _ = rsp.Submit(E1, rsp.Id, request, handler, CloudStorage.ResponsesDirectory);
                     }
                     catch (ParseException e)
                     {

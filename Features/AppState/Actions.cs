@@ -7,6 +7,7 @@ namespace DataBrowser.Features.AppState
     public enum ResponseAction
     {
         VIEW,
+        REMOVE,
         DELETE
     }
     public partial class AppState

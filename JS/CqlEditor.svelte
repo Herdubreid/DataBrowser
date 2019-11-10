@@ -43,6 +43,7 @@
         border: 0;
         left: 0;
         word-break: break-all;
+        white-space: break-spaces;
         overflow: visible;
         position: absolute;
         font-family: inherit;

@@ -1,4 +1,5 @@
 ﻿@inherits E1BaseComponent
+@inject E1Service E1
 
 <div class="card mt-2">
     <div class="card-body">
@@ -15,7 +16,7 @@
                 {
                     <div class="list-group-item">
                         <div class="btn-group-sm">
-                            <div class="btn btn-outline-danger"><i class="fa fa-times"></i></div>
+                            <div class="btn btn-outline-danger" @onclick="@(() => Cancel(rsp.Id))"><i class="fa fa-times"></i></div>
                             <div class="btn btn-outline-success"><i class="fas fa-sync fa-spin"></i></div>
                         </div>
                     </div>
@@ -33,11 +34,11 @@
                         {
                             <div class="btn-group-sm">
                                 <button type="button" class="btn btn-outline-danger btn-sm" @onclick="@(() => Delete(rsp.Id))"><i class="fa fa-trash"></i></button>
-                                <button type="button" class="btn btn-outline-success btn-sm" @onclick="@(() => ViewData(rsp.Id))">View @rsp.Count rows <i class="fa fa-check"></i></button>
+                                <button type="button" class="btn btn-outline-success btn-sm" @onclick="@(() => ViewData(rsp.Id))">View @rsp.Count rows</button>
                             </div>
                         }
                         <div>
-                            <small>@rsp.title</small>
+                            <small>@(rsp.Error == null ? rsp.title : rsp.Error)</small>
                         </div>
                         <div>
                             <small>@rsp.Submitted.ToLocalTime()</small>
@@ -52,6 +53,10 @@
 @code {
     bool Busy { get; set; }
     string RefreshClass => $"{(@Busy ? "fas fa-sync fa-spin" : "fas fa-sync")}";
+    void Cancel(Guid id)
+    {
+        E1.CancelRequest(id);
+    }
     void Delete(Guid id)
     {
         Mediator.Send(new AppState.ResponseDataAction { Action = ResponseAction.DELETE, DataId = id });
