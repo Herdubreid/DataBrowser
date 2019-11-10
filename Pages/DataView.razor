@@ -7,7 +7,8 @@
 <div class="card shadow m-2">
     <div class="card-body">
         <div class="row card-title">
-            <h5 class="col">@QueryResponse.title</h5>
+            <h5 class="col-auto">@QueryResponse.title</h5>
+            <small class="col">@QueryResponse.environment</small>
             <div class="col-auto">
                 <button class="btn btn-outline-warning btn-sm" @onclick="@Remove"><i class="fas fa-times"></i></button>
             </div>
@@ -28,13 +29,14 @@
                     {
                         if (col.Value == JsonValueKind.Object)
                         {
-                            <DxDataGridColumn Field="groupBy" Caption="@($"groupBy.{col.Key}")">
+                            <DxDataGridColumn Field="groupBy"
+                                              Caption="@($"groupBy.{col.Key}")">
                                 <DisplayTemplate Context="data">
                                     @{
                                         var el = (data as DynamicJsonElement).Element;
                                         var g = el.GetProperty("groupBy");
                                         var p = g.GetProperty(col.Key);
-                                        <p>@p.ToString()</p>
+                                        @p.ToString()
                                     }
                                 </DisplayTemplate>
                             </DxDataGridColumn>

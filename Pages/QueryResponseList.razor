@@ -27,7 +27,7 @@
                         @if (rsp.Count == 0)
                         {
                             <div>
-                                <button type="button" class="btn btn-outline-danger btn-sm">Zero Rows <i class="fa fa-times"></i></button>
+                                <button type="button" class="btn btn-outline-danger btn-sm" @onclick="@(() => Clear(rsp.Id))">Zero Rows <i class="fa fa-times"></i></button>
                             </div>
                         }
                         else
@@ -40,7 +40,8 @@
                         <div>
                             <small>@(rsp.Error == null ? rsp.title : rsp.Error)</small>
                         </div>
-                        <div>
+                        <div class="font-italic">
+                            <small>@rsp.environment</small>
                             <small>@rsp.Submitted.ToLocalTime()</small>
                         </div>
                     </div>
@@ -56,6 +57,10 @@
     void Cancel(Guid id)
     {
         E1.CancelRequest(id);
+    }
+    void Clear(Guid id)
+    {
+        Mediator.Send(new AppState.ResponseDataAction { Action = ResponseAction.CLEAR, DataId = id });
     }
     void Delete(Guid id)
     {

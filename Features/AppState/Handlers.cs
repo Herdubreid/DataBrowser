@@ -27,6 +27,9 @@ namespace DataBrowser.Features.AppState
                     case ResponseAction.REMOVE:
                         State.ResponseData.Remove(aAction.DataId);
                         break;
+                    case ResponseAction.CLEAR:
+                        State.QueryResponses.Remove(State.QueryResponses.Find(r => r.Id.CompareTo(aAction.DataId) == 0));
+                        break;
                     case ResponseAction.DELETE:
                         State.ResponseData.Remove(aAction.DataId);
                         State.QueryResponses.Remove(State.QueryResponses.Find(r => r.Id.CompareTo(aAction.DataId) == 0));
@@ -296,6 +299,26 @@ namespace DataBrowser.Features.AppState
                 CloudStorage = cloudStorage;
             }
         }
+        public class SetE1ContextHander : ActionHandler<SetE1ContextAction>
+        {
+            AppState State => Store.GetState<AppState>();
+            E1Service E1 { get; }
+            public override Task<Unit> Handle(SetE1ContextAction aAction, CancellationToken aCancellationToken)
+            {
+                State.E1Context = State.E1Contexts.Find(r => r.Name.CompareTo(aAction.Name) == 0);
+                E1.BaseUrl = State.E1Context.BaseUrl;
+                E1.AuthResponse = State.E1Context.AuthResponse;
+
+                EventHandler handler = State.Changed;
+                handler?.Invoke(State, null);
+
+                return Unit.Task;
+            }
+            public SetE1ContextHander(IStore store, E1Service e1) : base(store)
+            {
+                E1 = e1;
+            }
+        }
         public class LoginHandler : ActionHandler<LoginAction>
         {
             AppState State => Store.GetState<AppState>();
@@ -315,7 +338,9 @@ namespace DataBrowser.Features.AppState
             public override async Task<Unit> Handle(LogoutAction aAction, CancellationToken aCancellationToken)
             {
                 await E1Service.Logout();
-                State.E1Context.AuthResponse = null;
+                var ct = State.E1Contexts.Find(r => r.Name.CompareTo(State.E1Context.Name) == 0);
+                ct.AuthResponse = null;
+                State.E1Context = null;
                 EventHandler handler = State.Changed;
                 handler?.Invoke(State, null);
                 return Unit.Value;

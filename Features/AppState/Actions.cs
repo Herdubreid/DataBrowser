@@ -8,10 +8,15 @@ namespace DataBrowser.Features.AppState
     {
         VIEW,
         REMOVE,
+        CLEAR,
         DELETE
     }
     public partial class AppState
     {
+        public class SetE1ContextAction : IAction
+        {
+            public string Name { get; set; }
+        }
         public class ResponseDataAction : IAction
         {
             public ResponseAction Action { get; set; }

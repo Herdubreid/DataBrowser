@@ -1,6 +1,6 @@
 ﻿using DataBrowser.Services;
 
-namespace DataBrowser.Features.AppState
+namespace DataBrowser.Features
 {
     public class SaveE1Context
     {

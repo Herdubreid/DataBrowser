@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections;
 using System.Dynamic;
 using System.Text.Json;
 using System.Text.Json.Serialization;
@@ -18,7 +17,7 @@ namespace DataBrowser.Features
             throw new NotImplementedException();
         }
     }
-    public class DynamicJsonElement : DynamicObject, IEnumerable
+    public class DynamicJsonElement : DynamicObject
     {
         public JsonElement Element { get; }
         public override bool TryGetMember(GetMemberBinder binder, out object result)
@@ -38,12 +37,6 @@ namespace DataBrowser.Features
         {
             return Element.EnumerateObject();
         }
-
-        IEnumerator IEnumerable.GetEnumerator()
-        {
-            throw new NotImplementedException();
-        }
-
         public DynamicJsonElement(JsonElement element)
         {
             Element = element;

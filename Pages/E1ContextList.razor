@@ -13,7 +13,11 @@
         <div class="list-group list-group-flush m-2">
             @foreach (var ct in State.E1Contexts)
             {
-                <button type="button" class="list-group-item list-group-item-action" @onclick="@(() => ShowLogin(ct))" >@ct.Name</button>
+                <button type="button"
+                        class="@($"list-group-item list-group-item-action {(ct.AuthResponse == null ? "" : "bg-success text-white")}")"
+                        @onclick="@(() => SelectContext(ct))">
+                    @ct.Name
+                </button>
             }
         </div>
     </div>
@@ -53,28 +57,28 @@
     <DxPopup HeaderText="Login">
         <ChildContent>
             <div class="ml-4 mr-4">
-            <form spellcheck="false" @onsubmit="@Login">
-                <div class="form-group-row">
-                    <label for="user">User</label>
-                    <input type="text" disabled="@LoginBusy" id="user" required class="form-control" @bind="@User" />
-                </div>
-                <div class="form-group-row">
-                    <label for="password">Password</label>
-                    <input type="password" disabled="@LoginBusy" id="password" required class="form-control" @bind="@Password" />
-                </div>
-                <div class="row">
-                    <label class="col text-danger">@Error</label>
-                </div>
-                <div class="row m-2">
-                    <div class="col"></div>
-                    <div class="col">
-                        <button type="submit" disabled="@LoginBusy" class="btn btn-primary"><i class="@OkClass"></i></button>
+                <form spellcheck="false" @onsubmit="@Login">
+                    <div class="form-group-row">
+                        <label for="user">User</label>
+                        <input type="text" disabled="@LoginBusy" id="user" required class="form-control" @bind="@User" />
                     </div>
-                    <div class="col">
-                        <button type="button" disabled="@LoginBusy" class="btn btn-warning" @onclick="@(() => PopupLogin = false)"><i class="fa fa-times"></i></button>
+                    <div class="form-group-row">
+                        <label for="password">Password</label>
+                        <input type="password" disabled="@LoginBusy" id="password" required class="form-control" @bind="@Password" />
                     </div>
-                </div>
-            </form>
+                    <div class="row">
+                        <label class="col text-danger">@Error</label>
+                    </div>
+                    <div class="row m-2">
+                        <div class="col"></div>
+                        <div class="col">
+                            <button type="submit" disabled="@LoginBusy" class="btn btn-primary"><i class="@OkClass"></i></button>
+                        </div>
+                        <div class="col">
+                            <button type="button" disabled="@LoginBusy" class="btn btn-warning" @onclick="@(() => PopupLogin = false)"><i class="fa fa-times"></i></button>
+                        </div>
+                    </div>
+                </form>
             </div>
         </ChildContent>
     </DxPopup>
@@ -91,7 +95,7 @@
     string Error { get; set; }
     string RefreshClass => $"{(@Busy ? "fas fa-sync fa-spin" : "fas fa-sync")}";
     string OkClass => $"{(@AddBusy || @LoginBusy ? "spinner-grow spinner-grow-sm" : "fa fa-check")}";
-    E1Context E1Context { get; set; }
+    E1Context E1Context => State.E1Context;
     bool popupAdd = false;
     bool PopupAdd
     {
@@ -111,14 +115,16 @@
         get => popupLogin;
         set
         {
+            User = E1Context.User;
+            Password = string.Empty;
             popupLogin = value;
             InvokeAsync(StateHasChanged);
         }
     }
-    void ShowLogin(E1Context e1Context)
+    async Task SelectContext(E1Context e1Context)
     {
-        E1Context = e1Context;
-        PopupLogin = true;
+        await Mediator.Send(new AppState.SetE1ContextAction { Name = e1Context.Name });
+        if (!State.Authenticated) PopupLogin = true;
     }
     async Task Login()
     {
@@ -126,9 +132,14 @@
         E1Service.BaseUrl = E1Context.BaseUrl;
         try
         {
+            E1Context.User = User;
             E1Context.AuthResponse = await E1Service.Login(User, Password);
             await Mediator.Send(new AppState.LoginAction { E1Context = E1Context });
             PopupLogin = false;
+        }
+        catch (Celin.AIS.HttpWebException e)
+        {
+            Error = e.ErrorResponse.message;
         }
         catch (Exception e)
         {
