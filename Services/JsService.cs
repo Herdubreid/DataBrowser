@@ -1,4 +1,7 @@
-﻿using Microsoft.JSInterop;
+﻿using DataBrowser.Features.AppState;
+using MediatR;
+using Microsoft.JSInterop;
+using System;
 using System.Threading.Tasks;
 
 namespace DataBrowser.Services
@@ -6,10 +9,21 @@ namespace DataBrowser.Services
     public class JsService
     {
         IJSRuntime JsRuntime { get; }
-        DotNetObjectReference<JsService> ObjectReference { get; }
+        IMediator Mediator { get; }
+        DotNetObjectReference<JsService> Ref { get; }
+        [JSInvokable]
+        public void TextChanged(string id, string qry)
+        {
+            var guid = new Guid(id);
+            Mediator.Send(new AppState.SaveQueryRequestAction { Id = guid, Query = qry });
+        }
+        public void SaveAs(string filename, byte[] data)
+        {
+            JsRuntime.InvokeVoidAsync("window.saveAsFile", filename, Convert.ToBase64String(data));
+        }
         public void InitEditor(string id, string text)
         {
-            JsRuntime.InvokeVoidAsync("window.cqlEditor.init", id, text);
+            JsRuntime.InvokeVoidAsync("window.cqlEditor.init", Ref, id, text);
         }
         public async Task<string> GetEditorTextAsync(string id)
         {
@@ -23,10 +37,11 @@ namespace DataBrowser.Services
         {
             JsRuntime.InvokeVoidAsync("window.jsonViewer.setText", id, text);
         }
-        public JsService(IJSRuntime jsRuntime)
+        public JsService(IJSRuntime jsRuntime, IMediator mediator)
         {
             JsRuntime = jsRuntime;
-            ObjectReference = DotNetObjectReference.Create(this);
+            Mediator = mediator;
+            Ref = DotNetObjectReference.Create(this);
         }
     }
 }

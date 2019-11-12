@@ -4,13 +4,15 @@
     import './prism/prism-celinql';
     import { textMapStore } from './stores';
 
+    export let caller;
     export let id;
 
+    let editId = `${id}-edit`;
     let textareaEl;
     let codeEl;
     let mounted = false;
 
-    let text = $textMapStore.get(id);
+    let text = $textMapStore.get(editId);
     
     $: code = Prism.highlight(text, Prism.languages.celinql, "CelinQL")
         || "<em style='color: lightgray;'>Enter Command</em>";
@@ -24,7 +26,8 @@
         : '1px';
 
     const setText = () => {
-        $textMapStore.set(id, text);
+        $textMapStore.set(editId, text);
+        caller.invokeMethodAsync("TextChanged", id, text);
     };
 
     onMount(() => {

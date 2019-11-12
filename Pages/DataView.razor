@@ -7,10 +7,14 @@
 <div class="card shadow m-2">
     <div class="card-body">
         <div class="row card-title">
-            <h5 class="col-auto">@QueryResponse.title</h5>
-            <small class="col">@QueryResponse.environment</small>
+            <h5 class="col-auto">@QueryResponse.Title</h5>
+            <div class="col">
+                <small>@QueryResponse.Environment</small>
+                <small>@QueryResponse.Submitted.ToLocalTime()</small>
+            </div>
             <div class="col-auto">
-                <button class="btn btn-outline-warning btn-sm" @onclick="@Remove"><i class="fas fa-times"></i></button>
+                <button class="btn btn-outline-primary btn-sm" @onclick="@Edit"><i class="far fa-edit"></i></button>
+                <button class="btn btn-outline-warning btn-sm" @onclick="@Remove"><i class="fas fa-window-minimize"></i></button>
             </div>
         </div>
         @if (Rows != null)
@@ -75,6 +79,7 @@
     List<KeyValuePair<string, JsonValueKind>> Columns { get; set; } = new List<KeyValuePair<string, JsonValueKind>>();
     string Error { get; set; }
 
+    void Edit() => Mediator.Send(new AppState.AddNewQueryRequestAction { Title = QueryResponse.Title, Query = QueryResponse.Query });
     void Remove() => Mediator.Send(new AppState.ResponseDataAction { Action = ResponseAction.REMOVE, DataId = DataId });
 
     protected override async Task OnAfterRenderAsync(bool firstRender)

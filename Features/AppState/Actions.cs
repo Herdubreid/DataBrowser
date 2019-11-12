@@ -17,6 +17,10 @@ namespace DataBrowser.Features.AppState
         {
             public string Name { get; set; }
         }
+        public class ResponseDataDownloadAction : IAction
+        {
+            public Guid DataId { get; set; }
+        }
         public class ResponseDataAction : IAction
         {
             public ResponseAction Action { get; set; }
@@ -31,12 +35,17 @@ namespace DataBrowser.Features.AppState
         {
             public Guid Id { get; set; }
             public string Title { get; set; }
+            public string Query { get; set; }
         }
         public class DeleteQueryRequestAction : IAction
         {
             public Guid Id { get; set; }
         }
-        public class AddNewQueryRequestAction : IAction { }
+        public class AddNewQueryRequestAction : IAction
+        {
+            public string Title { get; set; }
+            public string Query { get; set; }
+        }
         public class ToggleQueryRequestVisibilityAction : IAction
         {
             public Guid Id { get; set; }

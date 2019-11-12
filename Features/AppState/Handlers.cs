@@ -1,8 +1,11 @@
 ﻿using BlazorState;
 using DataBrowser.Services;
 using Microsoft.Azure.Storage.File;
+using OfficeOpenXml;
 using Pidgin;
 using System;
+using System.Collections.Generic;
+using System.Dynamic;
 using System.Linq;
 using System.Text.Json;
 using System.Threading;
@@ -13,7 +16,48 @@ namespace DataBrowser.Features.AppState
 {
     public partial class AppState
     {
-        public class ViewResponseDataHandler : ActionHandler<ResponseDataAction>
+        public class ResponseDataDownloadHandler : ActionHandler<ResponseDataDownloadAction>
+        {
+            AppState State => Store.GetState<AppState>();
+            JsService Js { get; }
+            CloudStorageService CloudStorage { get; }
+            public override async Task<Unit> Handle(ResponseDataDownloadAction aAction, CancellationToken aCancellationToken)
+            {
+                var source = CloudStorage.ResponsesDirectory.GetDirectoryReference("data").GetFileReference(aAction.DataId.ToString());
+                if (source.Exists())
+                {
+                    var rsp = State.QueryResponses.Find(r => r.Id.CompareTo(aAction.DataId) == 0);
+                    var data = JsonSerializer.Deserialize<QueryResponseData<object[]>>(
+                        await source.DownloadTextAsync(),
+                        new JsonSerializerOptions
+                        {
+                            Converters = { new ObjectArrayConverter() }
+                        });
+                    var rows = data.output ?? data.rowset;
+                    using var xl = new ExcelPackage();
+                    var ws = xl.Workbook.Worksheets.Add("Data");
+                    var header = new List<string[]>
+                    {
+                        new string[] { "Title:", rsp.Title },
+                        new string[] { "Query:", rsp.Query },
+                        new string[] { "Environment:", rsp.Environment },
+                        new string[] { "Submitted:", rsp.Submitted.ToString() },
+                        rsp.Columns.Select(c => c.Key).ToArray()
+                    };
+                    ws.Cells["A1:B5"].LoadFromArrays(header);
+                    ws.Cells["A6:A6"].LoadFromArrays(rows);
+                    Js.SaveAs("data.xlsx", xl.GetAsByteArray());
+                }
+
+                return Unit.Value;
+            }
+            public ResponseDataDownloadHandler(IStore store, JsService js, CloudStorageService cloudStorage) : base(store)
+            {
+                Js = js;
+                CloudStorage = cloudStorage;
+            }
+        }
+        public class ResponseDataHandler : ActionHandler<ResponseDataAction>
         {
             AppState State => Store.GetState<AppState>();
             CloudStorageService CloudStorage { get; }
@@ -51,7 +95,7 @@ namespace DataBrowser.Features.AppState
 
                 return Unit.Task;
             }
-            public ViewResponseDataHandler(IStore store, CloudStorageService cloudStorage) : base(store)
+            public ResponseDataHandler(IStore store, CloudStorageService cloudStorage) : base(store)
             {
                 CloudStorage = cloudStorage;
             }
@@ -84,7 +128,8 @@ namespace DataBrowser.Features.AppState
             public override Task<Unit> Handle(SaveQueryRequestAction aAction, CancellationToken aCancellationToken)
             {
                 var qr = State.QueryRequests.Find(qr => qr.Id.CompareTo(aAction.Id) == 0);
-                qr.Title = aAction.Title;
+                qr.Title = aAction.Title ?? qr.Title;
+                qr.Query = aAction.Query ?? qr.Query;
                 var dest = CloudStorage.RequestsDirectory.GetFileReference(qr.Id.ToString());
                 dest.UploadTextAsync(JsonSerializer.Serialize(qr, typeof(SaveQueryRequest), new JsonSerializerOptions { WriteIndented = true }));
 
@@ -128,8 +173,8 @@ namespace DataBrowser.Features.AppState
                 {
                     Id = Guid.NewGuid(),
                     Visible = true,
-                    Title = $"New-{State.QueryRequests.Count}",
-                    Query = string.Empty,
+                    Title = aAction.Title ?? $"New-{State.QueryRequests.Count}",
+                    Query = aAction.Query ?? string.Empty,
                     Toggled = DateTime.Now
                 };
                 State.QueryRequests.Add(qr);
@@ -165,6 +210,7 @@ namespace DataBrowser.Features.AppState
             CloudStorageService CloudStorage { get; }
             public override async Task<Unit> Handle(SubmitQueryAction aAction, CancellationToken aCancellationToken)
             {
+                EventHandler handler = State.Changed;
                 var qr = State.QueryRequests.Find(qr => qr.Id.CompareTo(aAction.Id) == 0);
                 qr.Query = await Js.GetEditorTextAsync(qr.Id.ToString());
                 if (qr.Query.Length > 0)
@@ -174,12 +220,17 @@ namespace DataBrowser.Features.AppState
                         var request = Celin.AIS.Data.DataRequest.Parser.Before(Parser.Char(';')).ParseOrThrow(qr.Query + ';');
                         var rsp = new QueryResponse { Id = Guid.NewGuid(), Query = qr.Query };
                         State.QueryResponses.Insert(0, rsp);
-                        EventHandler handler = State.Changed;
-                        _ = rsp.Submit(E1, rsp.Id, request, handler, CloudStorage.ResponsesDirectory);
+                        State.InRequest = true;
+                        await rsp.Submit(E1, rsp.Id, request, handler, CloudStorage.ResponsesDirectory);
                     }
                     catch (ParseException e)
                     {
                         Js.SetJsonText(qr.Id.ToString(), e.Message);
+                    }
+                    finally
+                    {
+                        State.InRequest = false;
+                        handler?.Invoke(State, null);
                     }
                 }
 
@@ -266,6 +317,13 @@ namespace DataBrowser.Features.AppState
                                 {
                                     State.QueryRequests.Add(newQr);
                                 }
+                                else
+                                {
+                                    var qr = State.QueryRequests.Find(r => r.Id.CompareTo(newQr.Id) == 0);
+                                    qr.Visible = false;
+                                    qr.Title = newQr.Title;
+                                    qr.Query = newQr.Query;
+                                }
                             }
                             catch { }
                         }
@@ -289,8 +347,8 @@ namespace DataBrowser.Features.AppState
                         break;
                 }
 
-                //EventHandler handler = State.Changed;
-                //handler?.Invoke(State, null);
+                EventHandler handler = State.Changed;
+                handler?.Invoke(State, null);
 
                 return Unit.Value;
             }
@@ -340,7 +398,7 @@ namespace DataBrowser.Features.AppState
                 await E1Service.Logout();
                 var ct = State.E1Contexts.Find(r => r.Name.CompareTo(State.E1Context.Name) == 0);
                 ct.AuthResponse = null;
-                State.E1Context = null;
+                State.E1Context.AuthResponse = null;
                 EventHandler handler = State.Changed;
                 handler?.Invoke(State, null);
                 return Unit.Value;

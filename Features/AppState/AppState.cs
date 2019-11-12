@@ -7,6 +7,7 @@ namespace DataBrowser.Features.AppState
     public partial class AppState : State<AppState>
     {
         public event EventHandler Changed;
+        public bool InRequest { get; set; }
         public List<Guid> ResponseData { get; set; }
         public List<QueryResponse> QueryResponses { get; set; }
         public List<QueryRequest> QueryRequests { get; set; }

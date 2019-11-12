@@ -7,7 +7,7 @@ import JsonViewer from './JsonViewer.svelte';
 const cqlEditors = new Map();
 const cqlEditorId = (id) => `${id}-edit`;
 window.cqlEditor = {
-    init: (id, text) => {
+    init: (caller, id, text) => {
         const target = document.getElementById(cqlEditorId(id));
         textMapStore.update(m => {
             m.set(cqlEditorId(id), text);
@@ -16,7 +16,8 @@ window.cqlEditor = {
         cqlEditors.set(id, new CqlEditor({
             target,
             props: {
-                id: cqlEditorId(id)
+                caller,
+                id
             }
         }));
     },
@@ -62,4 +63,13 @@ window.jsonViewer = {
             return m;
         });
     }
+}
+
+window.saveAsFile = (filename, bytesBase64) => {
+    const link = document.createElement('a');
+    link.download = filename;
+    link.href = `data:applicaton/octed-stream;base64,${bytesBase64}`;
+    document.body.appendChild(link); // Needed for Firefox
+    link.click();
+    document.body.removeChild(link);
 }

@@ -18,10 +18,11 @@ namespace DataBrowser.Features
     {
         public Guid Id { get; set; }
         public string Query { get; set; }
-        public string title { get; set; }
-        public string environment { get; set; }
+        public string Title { get; set; }
+        public IDictionary<string, string> Columns { get; set; }
+        public string Environment { get; set; }
         public DateTime Submitted { get; set; }
-        public Celin.AIS.Summary summary { get; set; }
+        public Celin.AIS.Summary Summary { get; set; }
         public int Count { get; set; }
     }
     public class QueryResponse : SaveQueryResponse
@@ -33,8 +34,8 @@ namespace DataBrowser.Features
             try
             {
                 Busy = true;
-                title = "Working...";
-                environment = e1.AuthResponse.environment;
+                Title = "Working...";
+                Environment = e1.AuthResponse.environment;
                 Submitted = DateTime.Now;
                 handler?.Invoke(this, null);
                 var cancel = new CancellationTokenSource();
@@ -47,17 +48,37 @@ namespace DataBrowser.Features
                     var n = it.Current.Name;
                     if (n.StartsWith("fs_"))
                     {
-                        title = it.Current.Value.GetProperty("title").GetString();
+                        Title = it.Current.Value.GetProperty("title").GetString();
                         var fm = JsonSerializer.Deserialize<Fs>(it.Current.Value.ToString());
-                        summary = fm.data.gridData.summary;
-                        Count = summary.records;
+                        Columns = fm.data.gridData.columns;
+                        Summary = fm.data.gridData.summary;
+                        Count = Summary.records;
                         data = new QueryResponseData<JsonElement> { rowset = fm.data.gridData.rowset };
                     }
                     else if (n.StartsWith("ds_"))
                     {
-                        title = n;
+                        Title = n;
                         var ds = JsonSerializer.Deserialize<Celin.AIS.Output<JsonElement>>(it.Current.Value.ToString());
                         Count = ds.output.Length;
+                        if (Count > 0)
+                        {
+                            Columns = new Dictionary<string, string>();
+                            foreach (var c in ds.output[0].EnumerateObject())
+                            {
+                                if (c.Value.ValueKind == JsonValueKind.Object)
+                                {
+                                    foreach (var sc in c.Value.EnumerateObject())
+                                    {
+                                        var s = $"{c.Name}.{sc.Name}";
+                                        Columns.Add(s, s);
+                                    }
+                                }
+                                else
+                                {
+                                    Columns.Add(c.Name, c.Name);
+                                }
+                            }
+                        }
                         data = new QueryResponseData<JsonElement> { output = ds.output };
                     }
                     else if (n.CompareTo("sysErrors") == 0)

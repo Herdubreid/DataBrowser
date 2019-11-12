@@ -13,8 +13,7 @@ namespace DataBrowser.Services
             = new Dictionary<Guid, CancellationTokenSource>();
         public void CancelRequest(Guid id)
         {
-            CancellationTokenSource cancel;
-            if (CancelTokens.TryGetValue(id, out cancel))
+            if (CancelTokens.TryGetValue(id, out CancellationTokenSource cancel))
             {
                 cancel.Cancel();
             }

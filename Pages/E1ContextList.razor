@@ -14,7 +14,7 @@
             @foreach (var ct in State.E1Contexts)
             {
                 <button type="button"
-                        class="@($"list-group-item list-group-item-action {(ct.AuthResponse == null ? "" : "bg-success text-white")}")"
+                        class="@($"list-group-item list-group-item-action {(ct.AuthResponse != null && (ct.Name.CompareTo(State.E1Context.Name) == 0) ? "bg-success text-white" : "")}")"
                         @onclick="@(() => SelectContext(ct))">
                     @ct.Name
                 </button>
@@ -54,7 +54,7 @@
 }
 @if (PopupLogin)
 {
-    <DxPopup HeaderText="Login">
+    <DxPopup HeaderText="@($"Login to {State.E1Context.Name}")">
         <ChildContent>
             <div class="ml-4 mr-4">
                 <form spellcheck="false" @onsubmit="@Login">
@@ -117,6 +117,7 @@
         {
             User = E1Context.User;
             Password = string.Empty;
+            Error = string.Empty;
             popupLogin = value;
             InvokeAsync(StateHasChanged);
         }
