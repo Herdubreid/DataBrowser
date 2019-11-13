@@ -18,7 +18,7 @@ Query Results are automatically saved on the Azure File System with a date-time 
 
 ![Excel Download](./excel-download.gif)
 
-The Excel download converts the result into an Excel spreadsheet with value type preservation.  This means that values that look like numbers are not automatically converted to number -- account `40.2020` is not stripped to the number `20.202` for example, as a `.csv` conversion might do.
+The Excel download converts the result into an Excel spreadsheet with value type preservation.  This means that values that look like numbers are not automatically converted to number -- account `40.2020` is not stripped to the number `40.202` for example, as a `.csv` conversion might do.
 
 ### Information Sharing
 
