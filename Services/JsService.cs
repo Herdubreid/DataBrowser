@@ -1,7 +1,7 @@
-﻿using Microsoft.JSInterop;
+﻿using DataBrowser.Features.AppState;
+using MediatR;
+using Microsoft.JSInterop;
 using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Threading.Tasks;
 
 namespace DataBrowser.Services
@@ -9,23 +9,39 @@ namespace DataBrowser.Services
     public class JsService
     {
         IJSRuntime JsRuntime { get; }
-        DotNetObjectReference<JsService> ObjectReference { get; }
-        public void InitEditor(string tag)
+        IMediator Mediator { get; }
+        DotNetObjectReference<JsService> Ref { get; }
+        [JSInvokable]
+        public void TextChanged(string id, string qry)
         {
-            JsRuntime.InvokeVoidAsync("window.editor.init", tag);
+            var guid = new Guid(id);
+            Mediator.Send(new AppState.SaveQueryRequestAction { Id = guid, Query = qry });
         }
-        public async Task<string> GetEditorTextAsync()
+        public void SaveAs(string filename, byte[] data)
         {
-            return await JsRuntime.InvokeAsync<string>("window.editor.getText");
+            JsRuntime.InvokeVoidAsync("window.saveAsFile", filename, Convert.ToBase64String(data));
         }
-        public void InitClock(string tag)
+        public void InitEditor(string id, string text)
         {
-            JsRuntime.InvokeVoidAsync("window.clock.init", tag);
+            JsRuntime.InvokeVoidAsync("window.cqlEditor.init", Ref, id, text);
         }
-        public JsService(IJSRuntime jsRuntime)
+        public async Task<string> GetEditorTextAsync(string id)
+        {
+            return await JsRuntime.InvokeAsync<string>("window.cqlEditor.getText", id);
+        }
+        public void InitJsonViewer(string id, string text)
+        {
+            JsRuntime.InvokeVoidAsync("window.jsonViewer.init", id, text);
+        }
+        public void SetJsonText(string id, string text)
+        {
+            JsRuntime.InvokeVoidAsync("window.jsonViewer.setText", id, text);
+        }
+        public JsService(IJSRuntime jsRuntime, IMediator mediator)
         {
             JsRuntime = jsRuntime;
-            ObjectReference = DotNetObjectReference.Create(this);
+            Mediator = mediator;
+            Ref = DotNetObjectReference.Create(this);
         }
     }
 }

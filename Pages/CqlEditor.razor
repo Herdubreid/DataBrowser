@@ -1,0 +1,109 @@
+﻿@inherits E1BaseComponent
+@inject JsService Js
+@inject ParserService Parser
+
+<div class="card shadow m-2">
+    <div class="card-body" style="height: 420px; width: 450px">
+        <div class="row card-title">
+            <h5 class="col"><input class="form-control border-0" readonly="@(!CanEditTitle)" @onblur="@UpdateTitle" @onfocus="@EditTitle" @bind-value="@Title" /></h5>
+            <div class="col-auto">
+                <button class="btn btn-sm btn-outline-warning" @onclick="@ToggleVisibility"><i class="fas fa-window-minimize"></i></button>
+            </div>
+        </div>
+        <DxTabs @bind-ActiveTabIndex="@ActiveTabIndex">
+            <DxTab Text="Edit"></DxTab>
+            <DxTab Text="Validate"></DxTab>
+        </DxTabs>
+        <div class="row m-2 font-mono" style="@BodyHeight" hidden="@(ActiveTabIndex != 0)" id="@EditorTag"></div>
+        <div class="row m-2 font-mono" style="@BodyHeight" hidden="@(ActiveTabIndex != 1)" id="@ViewerTag"></div>
+        <div class="row">
+            <div class="col-auto">
+                <button disabled="@(!State.Authenticated || State.InRequest)" class="btn btn-primary" @onclick="@SubmitQuery" >
+                <i class="fas fa-running"></i> Submit</button>
+            </div>
+            <div class="col"></div>
+            <div class="col-auto">
+                <button class="btn btn-outline-danger" @onclick="@Delete"><i class="fas fa-trash"></i> Delete</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    [Parameter]
+    public QueryRequest QueryRequest { get; set; }
+    string BodyHeight => "height: calc(100% - 150px)";
+    string EditorTag => $"{QueryRequest.Id.ToString()}-edit";
+    string ViewerTag => $"{QueryRequest.Id.ToString()}-view";
+    string Title { get; set; }
+    bool CanEditTitle { get; set; }
+    int activeTabIndex = 0;
+    int ActiveTabIndex
+    {
+        get => activeTabIndex;
+        set
+        {
+            activeTabIndex = value;
+            if (activeTabIndex == 1)
+            {
+                _ = Validate();
+            }
+            InvokeAsync(StateHasChanged);
+        }
+    }
+    async Task Validate()
+    {
+        var qry = await Js.GetEditorTextAsync(QueryRequest.Id.ToString());
+        Js.SetJsonText(QueryRequest.Id.ToString(), Parser.ToString(qry));
+    }
+    async Task SubmitQuery()
+    {
+        var qry = await Js.GetEditorTextAsync(QueryRequest.Id.ToString());
+        try
+        {
+            var request = Parser.Parse(qry);
+            await Mediator.Send(new AppState.SubmitQueryAction { Id = QueryRequest.Id });
+        }
+        catch (Exception e)
+        {
+            ActiveTabIndex = 1;
+        }
+    }
+    void EditTitle()
+    {
+        Title = QueryRequest.Title;
+        CanEditTitle = true;
+    }
+    void UpdateTitle()
+    {
+        if ((Title.Length == 0) || (Title.CompareTo(QueryRequest.Title) == 0))
+        {
+            Title = QueryRequest.Title;
+        }
+        else
+        {
+            Mediator.Send(new AppState.SaveQueryRequestAction { Id = QueryRequest.Id,  Title = Title });
+        }
+        CanEditTitle = false;
+    }
+    void ToggleVisibility()
+    {
+        Mediator.Send(new AppState.ToggleQueryRequestVisibilityAction { Id = QueryRequest.Id });
+    }
+    void Delete()
+    {
+        Mediator.Send(new AppState.DeleteQueryRequestAction { Id = QueryRequest.Id });
+    }
+    protected override void OnAfterRender(bool firstRender)
+    {
+        if (firstRender)
+        {
+            Js.InitEditor(QueryRequest.Id.ToString(), QueryRequest.Query);
+            Js.InitJsonViewer(QueryRequest.Id.ToString(), string.Empty);
+        }
+    }
+    protected override void OnParametersSet()
+    {
+        Title = QueryRequest.Title;
+    }
+}

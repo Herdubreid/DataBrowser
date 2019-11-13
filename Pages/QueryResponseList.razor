@@ -1,0 +1,85 @@
+﻿@inherits E1BaseComponent
+@inject E1Service E1
+
+<div class="card mt-2">
+    <div class="card-body">
+        <div class="pr-3 pb-2">
+            <h5>Results <i class="@(State.InRequest ? "text-danger spinner-grow spinner-grow-sm" : "")"></i></h5>
+            <div class="btn-group-vertical" style="position:absolute; top:0px; right:0px">
+                <button type="button" class="btn btn-outline-success btn-sm" disabled="@Busy" @onclick="@Refresh"><i class="@RefreshClass"></i></button>
+            </div>
+        </div>
+        <div class="list-group list-group-flush mt-2">
+            @foreach (var rsp in State.QueryResponses.OrderByDescending(e => e.Submitted))
+            {
+                if (@rsp.Busy)
+                {
+                    <div class="list-group-item">
+                        <div class="btn-group-sm">
+                            <div class="btn btn-outline-danger" @onclick="@(() => Cancel(rsp.Id))"><i class="fa fa-times"></i></div>
+                            <div class="btn btn-outline-success"><i class="fas fa-sync fa-spin"></i></div>
+                        </div>
+                    </div>
+                }
+                else
+                {
+                    <div class="list-group-item">
+                        @if (rsp.Count == 0)
+                        {
+                            <div>
+                                <button type="button" class="btn btn-outline-danger btn-sm" @onclick="@(() => Clear(rsp.Id))">Zero Rows <i class="fa fa-times"></i></button>
+                            </div>
+                        }
+                        else
+                        {
+                            <div class="btn-group-sm">
+                                <button type="button" class="btn btn-outline-danger btn-sm" @onclick="@(() => Delete(rsp.Id))"><i class="fa fa-trash"></i></button>
+                                <button type="button" class="btn btn-outline-success btn-sm" @onclick="@(() => ViewData(rsp.Id))">
+                                <i class="fab fa-sistrix"></i> @rsp.Count rows</button>
+                                <Download DataId="@rsp.Id"></Download>
+                            </div>
+                        }
+                        <div>
+                            <small>@(rsp.Error == null ? rsp.Title : rsp.Error)</small>
+                        </div>
+                        <div class="font-italic">
+                            <small>@rsp.Environment</small>
+                            <small>@rsp.Submitted.ToLocalTime()</small>
+                        </div>
+                    </div>
+                }
+            }
+        </div>
+    </div>
+</div>
+
+@code {
+    bool Busy { get; set; }
+    string RefreshClass => $"{(@Busy ? "fas fa-sync fa-spin" : "fas fa-sync")}";
+    void Cancel(Guid id)
+    {
+        E1.CancelRequest(id);
+    }
+    void Clear(Guid id)
+    {
+        Mediator.Send(new AppState.ResponseDataAction { Action = ResponseAction.CLEAR, DataId = id });
+    }
+    void Delete(Guid id)
+    {
+        Mediator.Send(new AppState.ResponseDataAction { Action = ResponseAction.DELETE, DataId = id });
+    }
+    void ViewData(Guid id)
+    {
+        Mediator.Send(new AppState.ResponseDataAction { Action = ResponseAction.VIEW, DataId = id });
+    }
+    async Task Refresh()
+    {
+        Busy = true;
+        await Mediator.Send(new AppState.RefreshCloudStorageAction { StorageType = StorageType.Responses });
+        Busy = false;
+    }
+    protected override async Task OnInitializedAsync()
+    {
+        await Refresh();
+    }
+}

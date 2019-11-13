@@ -1,34 +1,75 @@
 ﻿import './style.scss';
 import { get } from 'svelte/store';
-import { editorTextStore } from './stores';
-import Clock from './Clock.svelte';
-import Editor from './Editor.svelte';
+import { textMapStore } from './stores';
+import CqlEditor from './CqlEditor.svelte';
+import JsonViewer from './JsonViewer.svelte';
 
-window.clock = {
-    init: (tag) => {
-        const target = document.getElementsByTagName(tag)[0];
-        clock = new Clock({
+const cqlEditors = new Map();
+const cqlEditorId = (id) => `${id}-edit`;
+window.cqlEditor = {
+    init: (caller, id, text) => {
+        const target = document.getElementById(cqlEditorId(id));
+        textMapStore.update(m => {
+            m.set(cqlEditorId(id), text);
+            return m;
+        });
+        cqlEditors.set(id, new CqlEditor({
             target,
-            props: {}
+            props: {
+                caller,
+                id
+            }
+        }));
+    },
+    clear: (id) => {
+        get(textMapStore).delete(cqlEditorId(id));
+        cqlEditors.get(id).$destroy();
+    },
+    getText: (id) => {
+        var m = get(textMapStore);
+        return m.get(cqlEditorId(id));
+    },
+    setText: (id, text) => {
+        textMapStore.update(m => {
+            m.set(cqlEditorId(id), text);
+            return m;
         });
     }
 }
-let CurrentEditor;
-window.editor = {
-    init: (tag) => {
-        const target = document.getElementsByTagName(tag)[0];
-        CurrentEditor = new Editor({
-            target,
-            props: {}
+
+const jsonViewers = new Map();
+const jsonViewerId = (id) => `${id}-view`;
+window.jsonViewer = {
+    init: (id, text) => {
+        const target = document.getElementById(jsonViewerId(id));
+        textMapStore.update(m => {
+            m.set(jsonViewerId(id), text);
+            return m;
         });
+        jsonViewers.set(id, new JsonViewer({
+            target,
+            props: {
+                id: jsonViewerId(id)
+            }
+        }));
     },
-    clear: () => {
-        CurrentEditor.$destroy();
+    clear: (id) => {
+        get(textMapStore).delete(jsonViewer(id));
+        jsonViewers.get(id).$destroy();
     },
-    getText: () => {
-        return get(editorTextStore);
-    },
-    setText: (text) => {
-        editorTextStore.set(text);
+    setText: (id, text) => {
+        textMapStore.update(m => {
+            m.set(jsonViewerId(id), text);
+            return m;
+        });
     }
+}
+
+window.saveAsFile = (filename, bytesBase64) => {
+    const link = document.createElement('a');
+    link.download = filename;
+    link.href = `data:applicaton/octed-stream;base64,${bytesBase64}`;
+    document.body.appendChild(link); // Needed for Firefox
+    link.click();
+    document.body.removeChild(link);
 }

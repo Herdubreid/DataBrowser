@@ -1,17 +1,12 @@
 ﻿@inherits E1BaseComponent
-@using Cloudcrate.AspNetCore.Blazor.Browser.Storage;
-@inject SessionStorage SessionStorage
 @inject JsService  Js
 
 <div class="navbar fixed-top navbar-light bg-light">
-    <div class="col-auto">
-        <NavLink href="/"><i class="fas fa-home"></i></NavLink>
-    </div>
     <div class="col">
         @if  (State.Authenticated)
         {
             <p>
-                Welcome, @State.AuthResponse?.userInfo.alphaName you're logged into @State.AuthResponse?.environment
+                @State.E1Context.Name : Welcome, @State.E1Context?.AuthResponse?.userInfo.alphaName you're logged into @State.E1Context?.AuthResponse?.environment
             </p>
         }
         else
@@ -20,33 +15,10 @@
         }
     </div>
     <div class="col-auto">
-        <button class="btn btn-warning" @onclick="@Logout"><i class="fas fa-sign-out-alt"></i></button>
+        <button class="btn btn-warning btn-sm" @onclick="@Logout"><i class="fas fa-sign-out-alt"></i></button>
     </div>
 </div>
-<!--    
-@if (!State.Authenticated)
-{
-    <div id="overlay"></div>
-    <Login></Login>
-}
--->
 
 @code {
-    protected async Task Logout() => await Mediator.Send(new LogoutAction());
-    protected override async Task OnAfterRenderAsync(bool firstRender)
-    {
-        /*
-        base.OnAfterRender(firstRender);
-        if (firstRender && !State.Authenticated)
-        {
-            var resp = await SessionStorage.GetItemAsync<Celin.AIS.AuthResponse>(E1Service.SESSIONKEY);
-            if (resp != null)
-            {
-                await Mediator.Send(new LoginAction { AuthResponse = resp });
-            }
-        }*/
-    }
-    protected override void OnAfterRender(bool firstRender)
-    {
-    }
+    protected async Task Logout() => await Mediator.Send(new AppState.LogoutAction());
 }

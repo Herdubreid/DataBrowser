@@ -1,12 +1,12 @@
 //
 import { writable } from 'svelte/store';
 
-const editorText = () => {
-    const { subscribe, set } = writable('');
+const textMap = () => {
+    const {subscribe,update} = writable(new Map())
     return {
         subscribe,
-        set
-    }
+        update
+    };
 }
 
-export const editorTextStore = editorText();
+export const textMapStore = textMap();

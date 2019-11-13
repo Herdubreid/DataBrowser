@@ -1,0 +1,19 @@
+﻿@inherits BlazorStateComponent
+
+<button type="button" class="btn btn-outline-success btn-sm" disabled="@Downloading" @onclick="@Start">
+    <i class="@($"{(Downloading ? "fas fa-circle-notch fa-spin" : "far fa-file-excel")}")"></i> Download
+</button>
+
+@code {
+    [Parameter]
+    public Guid DataId { get; set; }
+
+    bool Downloading { get; set; }
+        
+    async Task Start()
+    {
+        Downloading = true;
+        await Mediator.Send(new AppState.ResponseDataDownloadAction { DataId = DataId });
+        Downloading = false;
+    }
+}

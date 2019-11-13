@@ -5,6 +5,10 @@ VisualStudioVersion = 16.0.29411.138
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DataBrowser", "DataBrowser.csproj", "{56D4AF97-07BC-49F3-A539-3FBAFDBB8153}"
 EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Celin.AIS", "..\Celin.AIS\Celin.AIS.csproj", "{7417DD21-C848-4C1D-964F-C327988336CD}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Celin.AIS.Data", "..\Celin.AIS.Data\Celin.AIS.Data.csproj", "{0B41E9BF-FA7C-4299-9E56-5A4B5C511CB8}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -15,6 +19,14 @@ Global
 		{56D4AF97-07BC-49F3-A539-3FBAFDBB8153}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{56D4AF97-07BC-49F3-A539-3FBAFDBB8153}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{56D4AF97-07BC-49F3-A539-3FBAFDBB8153}.Release|Any CPU.Build.0 = Release|Any CPU
+		{7417DD21-C848-4C1D-964F-C327988336CD}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{7417DD21-C848-4C1D-964F-C327988336CD}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{7417DD21-C848-4C1D-964F-C327988336CD}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{7417DD21-C848-4C1D-964F-C327988336CD}.Release|Any CPU.Build.0 = Release|Any CPU
+		{0B41E9BF-FA7C-4299-9E56-5A4B5C511CB8}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{0B41E9BF-FA7C-4299-9E56-5A4B5C511CB8}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{0B41E9BF-FA7C-4299-9E56-5A4B5C511CB8}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{0B41E9BF-FA7C-4299-9E56-5A4B5C511CB8}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

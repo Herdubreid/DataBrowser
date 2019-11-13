@@ -7,7 +7,7 @@ namespace DataBrowser.Pages
     public class E1BaseComponent : BlazorStateComponent
     {
         protected AppState State => Store.GetState<AppState>();
-        protected void Update(object sender, EventArgs args) => StateHasChanged();
+        protected void Update(object sender, EventArgs args) => InvokeAsync(StateHasChanged);
         protected override void OnInitialized()
         {
             State.Changed += Update;

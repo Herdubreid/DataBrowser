@@ -1,0 +1,151 @@
+﻿@using System.Text.Json
+
+@inherits E1BaseComponent
+@inject CloudStorageService CloudStorage
+<!--
+-->
+<div class="card shadow m-2">
+    <div class="card-body">
+        <div class="row card-title">
+            <h5 class="col-auto">@QueryResponse.Title</h5>
+            <div class="col">
+                <small>@QueryResponse.Environment</small>
+                <small>@QueryResponse.Submitted.ToLocalTime()</small>
+            </div>
+            <div class="col-auto">
+                <button class="btn btn-outline-primary btn-sm" @onclick="@Edit"><i class="far fa-edit"></i></button>
+                <button class="btn btn-outline-warning btn-sm" @onclick="@Remove"><i class="fas fa-window-minimize"></i></button>
+            </div>
+        </div>
+        @if (Rows != null)
+        {
+            <div class="text-monospace" style="width:700px; font-size:12px">
+                <DxDataGrid Data="@Rows"
+                            T="@DynamicJsonElement"
+                            AllowSort="false"
+                            ShowFilterRow="false"
+                            PageSize="100"
+                            DataNavigationMode="@DataGridNavigationMode.VirtualScrolling"
+                            VerticalScrollableHeight="400"
+                            VerticalScrollBarMode="@ScrollBarMode.Auto"
+                            HorizontalScrollBarMode="@ScrollBarMode.Auto">
+                    @foreach (var col in Columns)
+                    {
+                        if (col.Value == JsonValueKind.Object)
+                        {
+                            <DxDataGridColumn Field="groupBy"
+                                              Caption="@($"groupBy.{col.Key}")">
+                                <DisplayTemplate Context="data">
+                                    @{
+                                        var el = (data as DynamicJsonElement).Element;
+                                        var g = el.GetProperty("groupBy");
+                                        var p = g.GetProperty(col.Key);
+                                        @p.ToString()
+                                    }
+                                </DisplayTemplate>
+                            </DxDataGridColumn>
+                        }
+                        else
+                        {
+                            <DxDataGridColumn Field="@col.Key"
+                                              Caption="@col.Key"
+                                              Width="130px"
+                                              TextAlignment="@(col.Value == JsonValueKind.Number ? DataGridTextAlign.Right : DataGridTextAlign.Left)">
+                            </DxDataGridColumn>
+                        }
+                    }
+                </DxDataGrid>
+            </div>
+        }
+        else
+        {
+            <div>
+                <i class="fas fa-spinner fa-spin"></i>
+                <em> Loading...</em>
+            </div>
+        }
+        <div class="row">
+            <label class="col text-danger">@Error</label>
+        </div>
+    </div>
+</div>
+
+@code {
+    [Parameter]
+    public Guid DataId { get; set; }
+
+    QueryResponse QueryResponse { get; set; }
+    IEnumerable<DynamicJsonElement> Rows { get; set; }
+    List<KeyValuePair<string, JsonValueKind>> Columns { get; set; } = new List<KeyValuePair<string, JsonValueKind>>();
+    string Error { get; set; }
+
+    void Edit() => Mediator.Send(new AppState.AddNewQueryRequestAction { Title = QueryResponse.Title, Query = QueryResponse.Query });
+    void Remove() => Mediator.Send(new AppState.ResponseDataAction { Action = ResponseAction.REMOVE, DataId = DataId });
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            var source = CloudStorage
+                .ResponsesDirectory
+                .GetDirectoryReference("data")
+                .GetFileReference(DataId.ToString());
+            if (source.Exists())
+            {
+                var t = await source.DownloadTextAsync();
+                try
+                {
+                    var data = JsonSerializer.Deserialize<QueryResponseData<DynamicJsonElement>>(t, new JsonSerializerOptions
+                    {
+                        Converters = { new DynamicJsonConverter() }
+                    });
+                    if (data.rowset != null)
+                    {
+                        var it = data.rowset.GetEnumerator();
+                        if (it.MoveNext())
+                        {
+                            foreach (var col in it.Current)
+                            {
+                                Columns.Add(new KeyValuePair<string, JsonValueKind>(col.Name, col.Value.ValueKind));
+                            }
+                        }
+                        Rows = data.rowset;
+                    }
+                    else
+                    {
+                        var it = data.output.GetEnumerator();
+                        if (it.MoveNext())
+                        {
+                            foreach (var col in it.Current)
+                            {
+                                var kind = col.Value.ValueKind;
+                                if (kind == JsonValueKind.Object)
+                                {
+                                    foreach (var sub in ((JsonElement)col.Value).EnumerateObject())
+                                    {
+                                        Columns.Add(new KeyValuePair<string, JsonValueKind>(sub.Name, kind));
+                                    }
+                                }
+                                else
+                                {
+                                    Columns.Add(new KeyValuePair<string, JsonValueKind>(col.Name, kind));
+                                }
+                            }
+                        }
+                        Rows = data.output;
+                    }
+                }
+                catch (Exception e)
+                {
+                    Error = e.Message;
+                    Rows = Enumerable.Empty<DynamicJsonElement>();
+                }
+            }
+            await InvokeAsync(StateHasChanged);
+        }
+    }
+    protected override void OnParametersSet()
+    {
+        QueryResponse = State.QueryResponses.Find(r => r.Id.CompareTo(DataId) == 0);
+    }
+}
