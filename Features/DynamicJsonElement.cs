@@ -14,27 +14,42 @@ namespace DataBrowser.Features
             List<object> els = new List<object>();
             foreach (var el in json.EnumerateObject())
             {
+                int i;
                 switch (el.Value.ValueKind)
                 {
                     case JsonValueKind.String:
                         els.Add(el.Value.GetString());
                         break;
                     case JsonValueKind.Number:
-                        int i;
                         if (el.Value.TryGetInt32(out i)) els.Add(i);
                         else els.Add(el.Value.GetDecimal());
                         break;
                     case JsonValueKind.Object:
-                        foreach (var sel in el.Value.EnumerateObject())
+                        JsonElement value;
+                        if (el.Value.TryGetProperty("groupBy", out value))
                         {
-                            if (sel.Value.ValueKind == JsonValueKind.String)
+                            foreach (var sel in el.Value.EnumerateObject())
                             {
-                                els.Add(sel.Value.GetString());
+                                if (sel.Value.ValueKind == JsonValueKind.String)
+                                {
+                                    els.Add(sel.Value.GetString());
+                                }
+                                else
+                                {
+                                    if (sel.Value.TryGetInt32(out i)) els.Add(i);
+                                    else els.Add(sel.Value.GetDecimal());
+                                }
+                            }
+                        } else if (el.Value.TryGetProperty("internalValue", out value))
+                        {
+                            if (value.ValueKind == JsonValueKind.String)
+                            {
+                                els.Add(el.Value.GetString());
                             }
                             else
                             {
-                                if (sel.Value.TryGetInt32(out i)) els.Add(i);
-                                else els.Add(sel.Value.GetDecimal());
+                                if (el.Value.TryGetInt32(out i)) els.Add(i);
+                                else els.Add(el.Value.GetDecimal());
                             }
                         }
                         break;

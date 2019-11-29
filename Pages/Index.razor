@@ -9,9 +9,13 @@
     }
 </div>
 <div class="row">
-    @foreach (var qr in VisibleQueryRequests)
+    @foreach (var d in State.DemoData)
     {
-        <CqlEditor @key="qr.Id" QueryRequest="@qr" />
+        <DemoView @key="@d" DataId="@d" />
+    }
+    @foreach (var q in VisibleQueryRequests)
+    {
+        <CqlEditor @key="q.Id" QueryRequest="@q" />
     }
 </div>
 

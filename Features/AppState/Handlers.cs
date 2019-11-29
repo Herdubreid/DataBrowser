@@ -42,7 +42,7 @@ namespace DataBrowser.Features.AppState
                         new string[] { "Query:", rsp.Query },
                         new string[] { "Environment:", rsp.Environment },
                         new string[] { "Submitted:", rsp.Submitted.ToString() },
-                        rsp.Columns.Select(c => c.Key).ToArray()
+                        rsp.Columns.ToArray()
                     };
                     ws.Cells["A1:B5"].LoadFromArrays(header);
                     ws.Cells["A6:A6"].LoadFromArrays(rows);
@@ -65,16 +65,17 @@ namespace DataBrowser.Features.AppState
             {
                 switch (aAction.Action)
                 {
-                    case ResponseAction.VIEW:
-                        State.ResponseData.Insert(0, aAction.DataId);
+                    case DataAction.VIEW:
+                        if (!State.ResponseData.Contains(aAction.DataId))
+                            State.ResponseData.Insert(0, aAction.DataId);
                         break;
-                    case ResponseAction.REMOVE:
+                    case DataAction.REMOVE:
                         State.ResponseData.Remove(aAction.DataId);
                         break;
-                    case ResponseAction.CLEAR:
+                    case DataAction.CLEAR:
                         State.QueryResponses.Remove(State.QueryResponses.Find(r => r.Id.CompareTo(aAction.DataId) == 0));
                         break;
-                    case ResponseAction.DELETE:
+                    case DataAction.DELETE:
                         State.ResponseData.Remove(aAction.DataId);
                         State.QueryResponses.Remove(State.QueryResponses.Find(r => r.Id.CompareTo(aAction.DataId) == 0));
                         var source = CloudStorage.ResponsesDirectory.GetFileReference(aAction.DataId.ToString());
@@ -99,6 +100,29 @@ namespace DataBrowser.Features.AppState
             {
                 CloudStorage = cloudStorage;
             }
+        }
+        public class DemoDataHandler : ActionHandler<DemoDataAction>
+        {
+            AppState State => Store.GetState<AppState>();
+            public override Task<Unit> Handle(DemoDataAction aAction, CancellationToken aCancellationToken)
+            {
+                switch (aAction.Action)
+                {
+                    case DataAction.VIEW:
+                        if (!State.DemoData.Contains(aAction.DataId))
+                            State.DemoData.Insert(0, aAction.DataId);
+                        break;
+                    case DataAction.REMOVE:
+                        State.DemoData.Remove(aAction.DataId);
+                        break;
+                }
+
+                EventHandler handler = State.Changed;
+                handler?.Invoke(State, null);
+
+                return Unit.Task;
+            }
+            public DemoDataHandler(IStore store) : base(store) { }
         }
         public class AddE1ContextHandler : ActionHandler<AddE1ContextAction>
         {
@@ -215,20 +239,109 @@ namespace DataBrowser.Features.AppState
                 qr.Query = await Js.GetEditorTextAsync(qr.Id.ToString());
                 if (qr.Query.Length > 0)
                 {
+                    var rsp = new QueryResponse
+                    {
+                        Id = Guid.NewGuid(),
+                        Query = qr.Query,
+                        Busy = true,
+                        Title = "Working...",
+                        Environment = E1.AuthResponse.environment,
+                        Submitted = DateTime.Now
+                    };
                     try
                     {
                         var request = Celin.AIS.Data.DataRequest.Parser.Before(Parser.Char(';')).ParseOrThrow(qr.Query + ';');
-                        var rsp = new QueryResponse { Id = Guid.NewGuid(), Query = qr.Query };
+                        rsp.Demo = request.formServiceDemo != null;
                         State.QueryResponses.Insert(0, rsp);
                         State.InRequest = true;
-                        await rsp.Submit(E1, rsp.Id, request, handler, CloudStorage.ResponsesDirectory);
+                        handler?.Invoke(this, null);
+                        var cancel = new CancellationTokenSource();
+                        E1.CancelTokens.Add(rsp.Id, cancel);
+                        var result = await E1.RequestAsync<JsonElement>(request, cancel);
+                        rsp = State.QueryResponses.Find(r => r.Id.CompareTo(rsp.Id) == 0);
+                        var it = result.EnumerateObject();
+                        QueryResponseData<JsonElement> data = null;
+                        if (it.MoveNext())
+                        {
+                            var n = it.Current.Name;
+                            if (n.StartsWith("fs_"))
+                            {
+                                rsp.Title = it.Current.Value.GetProperty("title").GetString();
+                                var fm = JsonSerializer.Deserialize<Celin.AIS.Form<Celin.AIS.FormData<JsonElement>>>(it.Current.Value.ToString());
+                                rsp.Summary = fm.data.gridData.summary;
+                                rsp.Count = rsp.Summary.records;
+                                if (rsp.Count > 0)
+                                {
+                                    rsp.Columns = new List<string>();
+                                    foreach (var c in fm.data.gridData.rowset[0].EnumerateObject()) rsp.Columns.Add(c.Name);
+                                    data = new QueryResponseData<JsonElement> { rowset = fm.data.gridData.rowset };
+                                }
+                            }
+                            else if (n.StartsWith("ds_"))
+                            {
+                                rsp.Title = n;
+                                var ds = JsonSerializer.Deserialize<Celin.AIS.Output<JsonElement>>(it.Current.Value.ToString());
+                                if (ds.error != null)
+                                {
+                                    rsp.Error = ds.error.message;
+                                }
+                                else
+                                {
+                                    rsp.Count = ds.output.Length;
+                                    if (rsp.Count > 0)
+                                    {
+                                        rsp.Columns = new List<string>();
+                                        foreach (var c in ds.output[0].EnumerateObject())
+                                        {
+                                            if (c.Value.ValueKind == JsonValueKind.Object)
+                                            {
+                                                foreach (var sc in c.Value.EnumerateObject())
+                                                {
+                                                    rsp.Columns.Add($"{c.Name}.{sc.Name}");
+                                                }
+                                            }
+                                            else
+                                            {
+                                                rsp.Columns.Add(c.Name);
+                                            }
+                                        }
+                                        data = new QueryResponseData<JsonElement> { output = ds.output };
+                                    }
+                                }
+                            }
+                            else if (n.CompareTo("sysErrors") == 0)
+                            {
+                                var errs = JsonSerializer.Deserialize<IEnumerable<Celin.AIS.ErrorWarning>>(it.Current.Value.ToString());
+                                foreach (var e in errs)
+                                {
+                                    rsp.Error = e.DESC;
+                                }
+                            }
+                            if (rsp.Count > 0)
+                            {
+                                var dest = CloudStorage.ResponsesDirectory.GetFileReference(rsp.Id.ToString());
+                                await dest.UploadTextAsync(JsonSerializer.Serialize(rsp,
+                                    new JsonSerializerOptions
+                                    {
+                                        WriteIndented = true
+                                    }));
+                                var destData = CloudStorage.ResponsesDirectory.GetDirectoryReference("data").GetFileReference(rsp.Id.ToString());
+                                await destData.UploadTextAsync(JsonSerializer.Serialize(data, new JsonSerializerOptions { WriteIndented = true }));
+                            }
+                        }
                     }
                     catch (ParseException e)
                     {
                         Js.SetJsonText(qr.Id.ToString(), e.Message);
                     }
+                    catch (Exception e)
+                    {
+                        rsp = State.QueryResponses.Find(r => r.Id.CompareTo(rsp.Id) == 0);
+                        rsp.Error = e.Message;
+                    }
                     finally
                     {
+                        rsp.Busy = false;
                         State.InRequest = false;
                         handler?.Invoke(State, null);
                     }
@@ -339,6 +452,7 @@ namespace DataBrowser.Features.AppState
                                 var newRsp = JsonSerializer.Deserialize<QueryResponse>(t);
                                 if (!State.QueryResponses.Exists(rsp => rsp.Id.CompareTo(newRsp.Id) == 0))
                                 {
+                                    newRsp.Busy = false;
                                     State.QueryResponses.Add(newRsp);
                                 }
                             }

@@ -4,9 +4,10 @@ Prism.languages.celinql = {
 		greedy: true
 	},
     'italic': /^[fv]\w+/,
-    'function': /\b(?:sum|min|max|avg|count|count_distinct|avg_distinct|group|desc|asc)\b/,
+    'bold': /[[\]()]/,
+    'function': /\b(?:sum|min|max|avg|count|count_distinct|avg_distinct|group|desc|asc|demo|v2)\b/,
     'keyword': /\b(?:all|any)\b/,
     'operator':/>=?|<[=>]?|\b(bw|in)\b|[=?_!^\$]/,
-    'punctuation': /[{}[\];(),.:]/,
+    'punctuation': /[{};,.:]/,
     'number': /\b\d+\b/
 };

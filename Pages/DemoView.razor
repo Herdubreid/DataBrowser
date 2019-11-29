@@ -1,0 +1,122 @@
+﻿@using System.Text.Json;
+@inherits E1BaseComponent
+@inject CloudStorageService CloudStorage
+
+<div class="card shadow m-2">
+    <div class="card-body">
+        <div class="row card-title">
+            <h5 class="col">
+                @QueryResponse.Title
+            </h5>
+            <div class="col-auto">
+                <button class="btn btn-outline-warning btn-sm" @onclick="@Remove"><i class="fas fa-window-minimize"></i></button>
+            </div>
+        </div>
+        @if (Columns != null)
+        {
+            <div class="text-monospace p-2">
+                <div class="row mb-2">
+                    <div class="col-7">
+                        <input type="search" class="form-control" placeholder="Filter..." @bind:event="oninput" @bind="@FieldFilter" />
+                    </div>
+                    <div class="col-5 pl-0">
+                        <div class="dropdown">
+                            <button class="btn btn-secondary dropdown-toggle" type="button" data-toggle="dropdown">
+                                @DATA_TYPES[DataType]
+                            </button>
+                            <div class="dropdown-menu">
+                                <button class="dropdown-item" type="button" @onclick="@(() => DataType = 0)">@DATA_TYPES[0]</button>
+                                <button class="dropdown-item" type="button" @onclick="@(() => DataType = 1)">@DATA_TYPES[1]</button>
+                                <button class="dropdown-item" type="button" @onclick="@(() => DataType = 2)">@DATA_TYPES[2]</button>
+                                <button class="dropdown-item" type="button" @onclick="@(() => DataType = 3)">@DATA_TYPES[3]</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div style="max-height: 270px; overflow-x:hidden; display:block">
+                    @foreach (var col in FilteredColumns)
+                    {
+                        <div class="row">
+                            <div class="col-7">@col.Key</div>
+                            <div class="col-5">@col.Value</div>
+                        </div>
+                    }
+                </div>
+            </div>
+        }
+        else
+        {
+            <div>
+                <i class="fas fa-spinner fa-spin"></i>
+                <em> Loading...</em>
+            </div>
+        }
+    </div>
+</div>
+
+@code {
+    [Parameter]
+    public Guid DataId { get; set; }
+
+    QueryResponse QueryResponse { get; set; }
+    readonly string[] DATA_TYPES = { "Data Type", "String", "Number", "Date" };
+    int DataType { get; set; } = 0;
+    string FieldFilter { get; set; } = string.Empty;
+    List<KeyValuePair<string, string>> Columns { get; set; }
+    IEnumerable<KeyValuePair<string, string>> FilteredColumns => Columns
+        .Where(r => FieldFilter.Length > 0 ? r.Key.Contains(FieldFilter.ToUpper()) : true)
+        .Where(r => {
+            switch (DataType)
+            {
+                case 1:
+                    return r.Value.CompareTo("X") == 0;
+                case 2:
+                    return r.Value.CompareTo("0") == 0;
+                case 3:
+                    return r.Value.CompareTo("19700101") == 0;
+            }
+            return true;
+        })
+        .OrderBy(r => r.Key);
+
+    void Remove() => Mediator.Send(new AppState.DemoDataAction { Action = DataAction.REMOVE, DataId = DataId });
+
+    protected override async Task OnInitializedAsync()
+    {
+        QueryResponse = State.QueryResponses.Find(r => r.Id.CompareTo(DataId) == 0);
+        var source = CloudStorage
+            .ResponsesDirectory
+            .GetDirectoryReference("data")
+            .GetFileReference(DataId.ToString());
+        if (source.Exists())
+        {
+            var t = await source.DownloadTextAsync();
+            var data = JsonSerializer.Deserialize<QueryResponseData<DynamicJsonElement>>(t, new JsonSerializerOptions
+            {
+                Converters = { new DynamicJsonConverter() }
+            });
+            if (data.rowset != null)
+            {
+                var it = data.rowset.GetEnumerator();
+                if (it.MoveNext())
+                {
+                    Columns = new List<KeyValuePair<string, string>>();
+                    foreach (var col in it.Current)
+                    {
+                        if (col.Value.ValueKind == JsonValueKind.Object)
+                        {
+                            if (col.Value.TryGetProperty("value", out var v))
+                            {
+                                Columns.Add(new KeyValuePair<string, string>(col.Name.Replace('_', '.'), v.GetString()));
+                            }
+                        }
+                        else
+                        {
+                            Columns.Add(new KeyValuePair<string, string>(col.Name.Replace('_', '.'), col.Value.ToString()));
+                        }
+                    }
+                }
+            }
+        }
+    }
+}

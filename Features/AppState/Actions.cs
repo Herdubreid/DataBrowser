@@ -4,7 +4,7 @@ using DataBrowser.Services;
 
 namespace DataBrowser.Features.AppState
 {
-    public enum ResponseAction
+    public enum DataAction
     {
         VIEW,
         REMOVE,
@@ -23,7 +23,12 @@ namespace DataBrowser.Features.AppState
         }
         public class ResponseDataAction : IAction
         {
-            public ResponseAction Action { get; set; }
+            public DataAction Action { get; set; }
+            public Guid DataId { get; set; }
+        }
+        public class DemoDataAction : IAction
+        {
+            public DataAction Action { get; set; }
             public Guid DataId { get; set; }
         }
         public class AddE1ContextAction : IAction

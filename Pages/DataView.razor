@@ -1,9 +1,7 @@
 ﻿@using System.Text.Json
-
 @inherits E1BaseComponent
 @inject CloudStorageService CloudStorage
-<!--
--->
+
 <div class="card shadow m-2">
     <div class="card-body">
         <div class="row card-title">
@@ -31,26 +29,42 @@
                             HorizontalScrollBarMode="@ScrollBarMode.Auto">
                     @foreach (var col in Columns)
                     {
-                        if (col.Value == JsonValueKind.Object)
+                        if (col.Value.ValueKind == JsonValueKind.Object)
                         {
-                            <DxDataGridColumn Field="groupBy"
-                                              Caption="@($"groupBy.{col.Key}")">
-                                <DisplayTemplate Context="data">
-                                    @{
-                                        var el = (data as DynamicJsonElement).Element;
-                                        var g = el.GetProperty("groupBy");
-                                        var p = g.GetProperty(col.Key);
-                                        @p.ToString()
-                                    }
-                                </DisplayTemplate>
-                            </DxDataGridColumn>
+                            JsonElement value;
+                            if (col.Value.TryGetProperty(INTERNAL_VALUE, out value))
+                            {
+                                <DxDataGridColumn Field="@col.Key"
+                                                  Caption="@col.Key"
+                                                  Width="130px"
+                                                  TextAlignment="@(value.ValueKind == JsonValueKind.Number ? DataGridTextAlign.Right : DataGridTextAlign.Left)">
+                                    <DisplayTemplate Context="data">
+                                        @value
+                                    </DisplayTemplate>
+                                </DxDataGridColumn>
+                            }
+                            else
+                            {
+                                <DxDataGridColumn Field=GROUP_BY
+                                                  Caption="@($"{GROUP_BY}.{col.Key}")"
+                                                  Width="130px">
+                                    <DisplayTemplate Context="data">
+                                        @{
+                                            var el = (data as DynamicJsonElement).Element;
+                                            var g = el.GetProperty(GROUP_BY);
+                                            var p = g.GetProperty(col.Key);
+                                            @p.ToString()
+                                        }
+                                    </DisplayTemplate>
+                                </DxDataGridColumn>
+                            }
                         }
                         else
                         {
                             <DxDataGridColumn Field="@col.Key"
                                               Caption="@col.Key"
                                               Width="130px"
-                                              TextAlignment="@(col.Value == JsonValueKind.Number ? DataGridTextAlign.Right : DataGridTextAlign.Left)">
+                                              TextAlignment="@(col.Value.ValueKind == JsonValueKind.Number ? DataGridTextAlign.Right : DataGridTextAlign.Left)">
                             </DxDataGridColumn>
                         }
                     }
@@ -76,12 +90,14 @@
 
     QueryResponse QueryResponse { get; set; }
     IEnumerable<DynamicJsonElement> Rows { get; set; }
-    List<KeyValuePair<string, JsonValueKind>> Columns { get; set; } = new List<KeyValuePair<string, JsonValueKind>>();
+    List<KeyValuePair<string, JsonElement>> Columns { get; set; } = new List<KeyValuePair<string, JsonElement>>();
     string Error { get; set; }
 
     void Edit() => Mediator.Send(new AppState.AddNewQueryRequestAction { Title = QueryResponse.Title, Query = QueryResponse.Query });
-    void Remove() => Mediator.Send(new AppState.ResponseDataAction { Action = ResponseAction.REMOVE, DataId = DataId });
+    void Remove() => Mediator.Send(new AppState.ResponseDataAction { Action = DataAction.REMOVE, DataId = DataId });
 
+    const string INTERNAL_VALUE = "internalValue";
+    const string GROUP_BY = "groupBy";
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
         if (firstRender)
@@ -106,7 +122,7 @@
                         {
                             foreach (var col in it.Current)
                             {
-                                Columns.Add(new KeyValuePair<string, JsonValueKind>(col.Name, col.Value.ValueKind));
+                                Columns.Add(new KeyValuePair<string, JsonElement>(col.Name, col.Value));
                             }
                         }
                         Rows = data.rowset;
@@ -118,17 +134,16 @@
                         {
                             foreach (var col in it.Current)
                             {
-                                var kind = col.Value.ValueKind;
-                                if (kind == JsonValueKind.Object)
+                                if (col.Value.ValueKind == JsonValueKind.Object)
                                 {
                                     foreach (var sub in ((JsonElement)col.Value).EnumerateObject())
                                     {
-                                        Columns.Add(new KeyValuePair<string, JsonValueKind>(sub.Name, kind));
+                                        Columns.Add(new KeyValuePair<string, JsonElement>(sub.Name, col.Value));
                                     }
                                 }
                                 else
                                 {
-                                    Columns.Add(new KeyValuePair<string, JsonValueKind>(col.Name, kind));
+                                    Columns.Add(new KeyValuePair<string, JsonElement>(col.Name, col.Value));
                                 }
                             }
                         }

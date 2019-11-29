@@ -64,7 +64,7 @@
             var request = Parser.Parse(qry);
             await Mediator.Send(new AppState.SubmitQueryAction { Id = QueryRequest.Id });
         }
-        catch (Exception e)
+        catch (Exception)
         {
             ActiveTabIndex = 1;
         }

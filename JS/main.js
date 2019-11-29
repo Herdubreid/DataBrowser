@@ -1,4 +1,5 @@
 ﻿import './style.scss';
+import 'bootstrap';
 import { get } from 'svelte/store';
 import { textMapStore } from './stores';
 import CqlEditor from './CqlEditor.svelte';
