@@ -1,5 +1,9 @@
 ## Data Browser Features
 
+> [Try Live Demo](https://io-celin-databrowser.azurewebsites.net)
+
+> [Explore on Github](https://github.com/Herdubreid/DataBrowser)
+
 ### Complex Queries
 
 ![Complex Query](./complex-query.gif)
