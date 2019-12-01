@@ -3,9 +3,9 @@ using DataBrowser.Services;
 using Microsoft.Azure.Storage.File;
 using OfficeOpenXml;
 using Pidgin;
+using static Pidgin.Parser;
 using System;
 using System.Collections.Generic;
-using System.Dynamic;
 using System.Linq;
 using System.Text.Json;
 using System.Threading;
@@ -250,7 +250,7 @@ namespace DataBrowser.Features.AppState
                     };
                     try
                     {
-                        var request = Celin.AIS.Data.DataRequest.Parser.Before(Parser.Char(';')).ParseOrThrow(qr.Query + ';');
+                        var request = Celin.AIS.Data.DataRequest.Parser.Before(Char(';')).ParseOrThrow(qr.Query.TrimEnd() + ';');
                         rsp.Demo = request.formServiceDemo != null;
                         State.QueryResponses.Insert(0, rsp);
                         State.InRequest = true;
@@ -369,7 +369,7 @@ namespace DataBrowser.Features.AppState
                 {
                     try
                     {
-                        var result = Celin.AIS.Data.DataRequest.Parser.Before(Parser.Char(';')).ParseOrThrow(qr.Query + ';');
+                        var result = Celin.AIS.Data.DataRequest.Parser.Before(Parser.Char(';')).ParseOrThrow(qr.Query.TrimEnd() + ';');
                         Js.SetJsonText(aAction.Id.ToString(), JsonSerializer.Serialize(result, new JsonSerializerOptions
                         {
                             IgnoreNullValues = true,
