@@ -1,5 +1,13 @@
 ## Data Browser Features
 
+### Field List
+
+![Field List](./demo.gif)
+
+The `demo` option lists the fields in a table of view along with data type, denoted as `X` for Strings, `0` for Numbers and `1970101` for dates (the Unix epoch).
+
+The list can be filtered by name or data type.
+
 ### Syntax Highlighting Query Editor
 
 ![Editor Syntax Highlighting](./editor.gif)
