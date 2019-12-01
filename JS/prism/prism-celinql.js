@@ -6,7 +6,7 @@ Prism.languages.celinql = {
     'italic': /^[fv]\w+/,
     'bold': /[[\]()]/,
     'function': /\b(?:sum|min|max|avg|count|count_distinct|avg_distinct|group|desc|asc|demo|v2)\b/,
-    'keyword': /\b(?:all|any)\b/,
+    'keyword': /\b(?:all|any|and|or)\b/,
     'operator':/>=?|<[=>]?|\b(bw|in)\b|[=?_!^\$]/,
     'punctuation': /[{};,.:]/,
     'number': /\b\d+\b/

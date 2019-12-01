@@ -1,5 +1,4 @@
 ﻿using Pidgin;
-using System;
 using System.Text.Json;
 
 namespace DataBrowser.Services
@@ -7,7 +6,7 @@ namespace DataBrowser.Services
     public class ParserService
     {
         public Celin.AIS.DatabrowserRequest Parse(string qry) =>
-            Celin.AIS.Data.DataRequest.Parser.Before(Parser.Char(';')).ParseOrThrow(qry + ';');
+            Celin.AIS.Data.DataRequest.Parser.Before(Parser.Char(';')).ParseOrThrow(qry.TrimEnd() + ';');
         public string ToString(string qry)
         {
             try
