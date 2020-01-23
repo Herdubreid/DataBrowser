@@ -7,14 +7,14 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Azure.Storage.Common" Version="12.0.0" />
-    <PackageReference Include="Blazor-State" Version="2.0.6" />
+    <PackageReference Include="Azure.Storage.Common" Version="12.1.1" />
+    <PackageReference Include="Blazor-State" Version="3.0.1" />
     <PackageReference Include="Celin.AIS.Data" Version="3.0.0-rc" />
     <PackageReference Include="DevExpress.Blazor" Version="19.1.9" />
     <PackageReference Include="EPPlus" Version="4.5.3.2" />
-    <PackageReference Include="Microsoft.ApplicationInsights.AspNetCore" Version="2.12.0-beta4" />
-    <PackageReference Include="Microsoft.Azure.SignalR" Version="1.2.1" />
-    <PackageReference Include="Microsoft.Azure.Storage.File" Version="11.1.1" />
+    <PackageReference Include="Microsoft.ApplicationInsights.AspNetCore" Version="2.12.0" />
+    <PackageReference Include="Microsoft.Azure.SignalR" Version="1.2.3" />
+    <PackageReference Include="Microsoft.Azure.Storage.File" Version="11.1.2" />
   </ItemGroup>
 
   <ItemGroup>

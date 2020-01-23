@@ -14,12 +14,13 @@
     <link href="~/lib/dx-blazor/dx-blazor.css" rel="stylesheet" />
     <link href="~/site.css" rel="stylesheet" />
     <script src="~/lib/dx-blazor/dx-blazor.js"></script>
-    <script src="~/main.js"></script>
+    <link rel="apple-touch-icon" href="/icon-192.png" />
 </head>
 <body>
     <app>
         @(await Html.RenderComponentAsync<App>(RenderMode.Server))
     </app>
     <script src="_framework/blazor.server.js"></script>
+    <script src="~/main.js"></script>
 </body>
 </html>
