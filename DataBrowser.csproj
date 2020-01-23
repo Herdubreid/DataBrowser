@@ -4,6 +4,10 @@
     <TargetFramework>netcoreapp3.0</TargetFramework>
     <UserSecretsId>d10f83a7-9d1f-405d-8a9e-f92323f92889</UserSecretsId>
     <RootNamespace>DataBrowser</RootNamespace>
+    <ServiceWorkerForce>true</ServiceWorkerForce>
+    <ManifestShortName>DataBrowser</ManifestShortName>
+    <ManifestLongName>E1 AIS Data Browser</ManifestLongName>
+    <ServiceWorkerCacheVersion>1</ServiceWorkerCacheVersion>
   </PropertyGroup>
 
   <ItemGroup>
