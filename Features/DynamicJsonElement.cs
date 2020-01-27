@@ -25,8 +25,7 @@ namespace DataBrowser.Features
                         else els.Add(el.Value.GetDecimal());
                         break;
                     case JsonValueKind.Object:
-                        JsonElement value;
-                        if (el.Value.TryGetProperty("groupBy", out value))
+                        if (el.Name.Equals("groupBy"))
                         {
                             foreach (var sel in el.Value.EnumerateObject())
                             {
@@ -40,7 +39,8 @@ namespace DataBrowser.Features
                                     else els.Add(sel.Value.GetDecimal());
                                 }
                             }
-                        } else if (el.Value.TryGetProperty("internalValue", out value))
+                        }
+                        else if (el.Value.TryGetProperty("internalValue", out var value))
                         {
                             if (value.ValueKind == JsonValueKind.String)
                             {

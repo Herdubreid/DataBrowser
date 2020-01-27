@@ -33,9 +33,9 @@ namespace DataBrowser.Features.AppState
                         {
                             Converters = { new ObjectArrayConverter() }
                         });
-                    var rows = data.output ?? data.rowset;
                     using var xl = new ExcelPackage();
                     var ws = xl.Workbook.Worksheets.Add("Data");
+                    var rows = data.output ?? data.rowset;
                     var header = new List<string[]>
                     {
                         new string[] { "Title:", rsp.Title },

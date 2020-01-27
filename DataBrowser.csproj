@@ -7,7 +7,7 @@
     <ServiceWorkerForce>true</ServiceWorkerForce>
     <ManifestShortName>DataBrowser</ManifestShortName>
     <ManifestLongName>E1 AIS Data Browser</ManifestLongName>
-    <ServiceWorkerCacheVersion>1</ServiceWorkerCacheVersion>
+    <ServiceWorkerCacheVersion>2</ServiceWorkerCacheVersion>
   </PropertyGroup>
 
   <ItemGroup>
